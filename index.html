@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dual-Engine Alignment Rig (Full Version)</title>
+    <title>Dual-Engine Alignment Rig (Hybrid Gesture Logic)</title>
     <style>
         html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #121214; }
         #image-overlay-rig-root {
@@ -48,7 +48,7 @@
             position: relative; background: #09090b; border: 2px solid var(--border-color); 
             overflow: hidden; width: 100%; height: 100%; border-radius: 8px; cursor: grab; 
             box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            touch-action: none; /* KEY FIX: Disables browser zoom/pan */
+            touch-action: none; 
         }
         .viewport.marking-ref, .viewport.marking-ref * { border-color: var(--accent-danger) !important; cursor: crosshair !important; }
         .viewport.marking-draw, .viewport.marking-draw * { border-color: var(--accent-primary) !important; cursor: crosshair !important; }
@@ -269,14 +269,20 @@ document.addEventListener("DOMContentLoaded", () => {
         if(e.touches.length === 1) handleWorkspacePointerDown(e.touches[0].clientX, e.touches[0].clientY, 0); 
     }, {passive: true});
 
-    // --- INTEGRATED MULTI-TOUCH GESTURES ---
+    // --- INTEGRATED HYBRID GESTURES ---
     viewport.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             const t1 = e.touches[0], t2 = e.touches[1];
             initDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             initAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
-            initScale = layers[activeTarget].scale;
-            initRot = layers[activeTarget].rot;
+            
+            // If in Pan mode, control global; otherwise control Active Layer
+            if (currentMode === 'pan') {
+                initScale = zoomScale;
+            } else {
+                initScale = layers[activeTarget].scale;
+                initRot = layers[activeTarget].rot;
+            }
         }
     }, {passive: false});
 
@@ -286,8 +292,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const t1 = e.touches[0], t2 = e.touches[1];
             const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
-            layers[activeTarget].scale = initScale * (dist / initDist);
-            layers[activeTarget].rot = initRot + (angle - initAngle);
+            
+            if (currentMode === 'pan') {
+                zoomScale = initScale * (dist / initDist);
+            } else {
+                layers[activeTarget].scale = initScale * (dist / initDist);
+                layers[activeTarget].rot = initRot + (angle - initAngle);
+            }
             updateTransforms();
         }
     }, {passive: false});
