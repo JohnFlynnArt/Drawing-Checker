@@ -269,15 +269,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if(e.touches.length === 1) handleWorkspacePointerDown(e.touches[0].clientX, e.touches[0].clientY, 0); 
     }, {passive: true});
 
-    // --- INTEGRATED HYBRID GESTURES ---
+// --- INTEGRATED HYBRID GESTURES (DOM-Class Aware) ---
     viewport.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             const t1 = e.touches[0], t2 = e.touches[1];
             initDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             initAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
             
-            // Check mode explicitly to ensure context is locked
-            if (currentMode === 'mark-ref' || currentMode === 'mark-draw') {
+            // Check the actual class of the viewport to determine context
+            if (viewport.classList.contains('marking-ref') || viewport.classList.contains('marking-draw')) {
                 initScale = layers[activeTarget].scale;
                 initRot = layers[activeTarget].rot;
             } else {
@@ -293,8 +293,8 @@ document.addEventListener("DOMContentLoaded", () => {
             const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
             
-            // Apply logic based on the mode
-            if (currentMode === 'mark-ref' || currentMode === 'mark-draw') {
+            // Re-check the class state dynamically
+            if (viewport.classList.contains('marking-ref') || viewport.classList.contains('marking-draw')) {
                 layers[activeTarget].scale = initScale * (dist / initDist);
                 layers[activeTarget].rot = initRot + (angle - initAngle);
             } else {
