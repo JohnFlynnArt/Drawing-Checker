@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dual-Engine Alignment Rig (Hybrid Gesture Logic)</title>
+    <title>Dual-Engine Alignment Rig (Fixed Hybrid Logic)</title>
     <style>
         html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #121214; }
         #image-overlay-rig-root {
@@ -276,12 +276,12 @@ document.addEventListener("DOMContentLoaded", () => {
             initDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             initAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
             
-            // If in Pan mode, control global; otherwise control Active Layer
-            if (currentMode === 'pan') {
-                initScale = zoomScale;
-            } else {
+            // Check mode explicitly to ensure context is locked
+            if (currentMode === 'mark-ref' || currentMode === 'mark-draw') {
                 initScale = layers[activeTarget].scale;
                 initRot = layers[activeTarget].rot;
+            } else {
+                initScale = zoomScale;
             }
         }
     }, {passive: false});
@@ -293,11 +293,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
             const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
             
-            if (currentMode === 'pan') {
-                zoomScale = initScale * (dist / initDist);
-            } else {
+            // Apply logic based on the mode
+            if (currentMode === 'mark-ref' || currentMode === 'mark-draw') {
                 layers[activeTarget].scale = initScale * (dist / initDist);
                 layers[activeTarget].rot = initRot + (angle - initAngle);
+            } else {
+                zoomScale = initScale * (dist / initDist);
             }
             updateTransforms();
         }
