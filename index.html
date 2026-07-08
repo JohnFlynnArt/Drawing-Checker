@@ -67,33 +67,28 @@
         .instructions-footer { margin-top: 12px; color: var(--text-muted); font-size: 11px; text-align: center; }
         kbd { background: #222227; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: white; }
         
-        @media (max-width: 768px) {
-    html, body { height: auto; overflow-y: auto; }
-    
+       @media (max-width: 768px) {
+    /* Allow the page to grow and scroll */
+    html, body {
+        height: auto;
+        overflow-y: auto;
+    }
     #image-overlay-rig-root { 
         flex-direction: column; 
-        height: auto; 
+        height: auto; /* Root grows with content */
+        min-height: 100vh; /* Ensures it at least fills the screen */
+        overflow: visible; /* Allows the page-level scroll to work */
     }
-    
     .sidebar { 
         width: 100%; 
         max-height: none; 
-        border-bottom: 2px solid var(--border-color); 
+        flex-shrink: 0; 
+        border-bottom: 1px solid var(--border-color); 
     }
-    
     .main-content { 
-        flex: 0 0 auto; 
-        width: 100%; 
-        padding: 16px; 
+        height: 50vh; /* Fixed height for the viewport area only */
+        min-height: 350px; 
     }
-    
-    .viewport { 
-        width: 100%; 
-        aspect-ratio: 9 / 16; /* Mobile-friendly portrait ratio */
-        height: auto; 
-        min-height: 400px;
-    }
-    
     .instructions-footer { display: none; }
 }
     </style>
