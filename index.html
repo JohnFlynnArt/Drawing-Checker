@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dual-Engine Alignment Rig (UX State Patched)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual-Engine Alignment Rig (Full Version)</title>
     <style>
         html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #121214; }
         #image-overlay-rig-root {
@@ -30,10 +30,8 @@
         .audit-btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
         button { background: #2d2d34; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; user-select: none; }
         button:disabled { opacity: 0.35; cursor: not-allowed; }
-        
         .engine-btn { background: #232329; border: 1px solid var(--border-color); color: var(--text-muted); }
         .engine-btn.active { background: #3b82f6 !important; border-color: #60a5fa !important; color: white !important; font-weight: 600; }
-        
         .mode-btn.ref-style.active { background: var(--accent-danger); color: white; }
         .mode-btn.draw-style.active { background: var(--accent-primary); color: white; }
         .audit-select-btn.active { background: var(--accent-warning); color: #000; font-weight: 600; border-color: #fbbf24; }
@@ -45,19 +43,19 @@
         .slider-header { display: flex; justify-content: space-between; font-size: 12px; }
         input[type="range"] { width: 100%; accent-color: var(--accent-primary); }
         .checkbox-wrapper { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        
         .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; position: relative; height: 100%; }
-        .viewport { position: relative; background: #09090b; border: 2px solid var(--border-color); overflow: hidden; width: 100%; height: 100%; border-radius: 8px; cursor: grab; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .viewport { 
+            position: relative; background: #09090b; border: 2px solid var(--border-color); 
+            overflow: hidden; width: 100%; height: 100%; border-radius: 8px; cursor: grab; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            touch-action: none; /* KEY FIX: Disables browser zoom/pan */
+        }
         .viewport.marking-ref, .viewport.marking-ref * { border-color: var(--accent-danger) !important; cursor: crosshair !important; }
         .viewport.marking-draw, .viewport.marking-draw * { border-color: var(--accent-primary) !important; cursor: crosshair !important; }
-        
         .pan-wrapper { position: absolute; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; top: 0; left: 0; }
-        
         .layer { max-width: 90%; max-height: 90%; pointer-events: none; display: none; transform-origin: center center; position: absolute; top: 50%; left: 50%; }
         .layer.loaded { display: block; }
-        
         .viewport.audit-outline .apply-difference { mix-blend-mode: difference; filter: contrast(2) brightness(1.2); }
-        
         .marker { position: absolute; width: 12px; height: 12px; border-radius: 50%; border: 1px solid white; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: white; box-shadow: 0 0 4px rgba(0,0,0,0.6); }
         .marker.ref { background: var(--accent-danger); }
         .marker.draw { background: var(--accent-primary); }
@@ -66,31 +64,13 @@
         .pan-wrapper.hide-ref-only .marker.ref { display: none !important; }
         .instructions-footer { margin-top: 12px; color: var(--text-muted); font-size: 11px; text-align: center; }
         kbd { background: #222227; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: white; }
-        
-       @media (max-width: 768px) {
-    /* Allow the page to grow and scroll */
-    html, body {
-        height: auto;
-        overflow-y: auto;
-    }
-    #image-overlay-rig-root { 
-        flex-direction: column; 
-        height: auto; /* Root grows with content */
-        min-height: 100vh; /* Ensures it at least fills the screen */
-        overflow: visible; /* Allows the page-level scroll to work */
-    }
-    .sidebar { 
-        width: 100%; 
-        max-height: none; 
-        flex-shrink: 0; 
-        border-bottom: 1px solid var(--border-color); 
-    }
-    .main-content { 
-        height: 50vh; /* Fixed height for the viewport area only */
-        min-height: 350px; 
-    }
-    .instructions-footer { display: none; }
-}
+        @media (max-width: 768px) {
+            html, body { height: auto; overflow-y: auto; }
+            #image-overlay-rig-root { flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
+            .sidebar { width: 100%; max-height: none; flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
+            .main-content { height: 50vh; min-height: 350px; }
+            .instructions-footer { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -105,16 +85,13 @@
                     <button id="engine-proportional" class="engine-btn">2-Point Match</button>
                 </div>
             </div>
-            
             <div class="step-card" id="source-files-card">
-    <div class="step-header-row"><span class="step-title">1. Source Files</span></div>
-    
-    <div style="font-size: 11px; margin-bottom: 2px; color: var(--text-muted);">Reference Image</div>
-    <div class="upload-zone" id="slot-ref"><input type="file" id="upload-ref" accept="image/*"></div>
-    
-    <div style="font-size: 11px; margin-top: 8px; margin-bottom: 2px; color: var(--text-muted);">Drawing Image</div>
-    <div class="upload-zone" id="slot-draw"><input type="file" id="upload-draw" accept="image/*"></div>
-</div>
+                <div class="step-header-row"><span class="step-title">1. Source Files</span></div>
+                <div style="font-size: 11px; margin-bottom: 2px; color: var(--text-muted);">Reference Image</div>
+                <div class="upload-zone" id="slot-ref"><input type="file" id="upload-ref" accept="image/*"></div>
+                <div style="font-size: 11px; margin-top: 8px; margin-bottom: 2px; color: var(--text-muted);">Drawing Image</div>
+                <div class="upload-zone" id="slot-draw"><input type="file" id="upload-draw" accept="image/*"></div>
+            </div>
             <div class="step-card" id="pins-config-panel" style="display: none;">
                 <div class="step-header-row">
                     <span class="step-title">2. Match Pins</span>
@@ -141,7 +118,7 @@
                     <button id="audit-mode-outline" class="audit-select-btn">Outline</button>
                 </div>
             </div>
-            </div>
+        </div>
         <div class="sidebar-static-bottom">
             <div class="btn-group layer-selector"><button id="target-ref-btn">Target Ref</button><button id="target-draw-btn" class="active">Target Draw</button></div>
             <div class="slider-wrapper"><div class="slider-header"><span id="opacity-label">Drawing Opacity</span></div><input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5"></div>
@@ -169,15 +146,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const clearRefLink = root.querySelector('#clear-ref-link'), clearDrawLink = root.querySelector('#clear-draw-link'), pinsPanel = root.querySelector('#pins-config-panel');
     const strategyCard = root.querySelector('#strategy-card'), sourceFilesCard = root.querySelector('#source-files-card');
     const auditOverlayBtn = root.querySelector('#audit-mode-overlay'), auditBlinkBtn = root.querySelector('#audit-mode-blink'), auditOutlineBtn = root.querySelector('#audit-mode-outline');
-    
-    const enginePropBtn = root.querySelector('#engine-proportional');
-    const engineSightBtn = root.querySelector('#engine-sightsize');
+    const enginePropBtn = root.querySelector('#engine-proportional'), engineSightBtn = root.querySelector('#engine-sightsize');
     
     let zoomScale = 1, panX = 0, panY = 0, currentMode = 'pan', diagnosticMode = 'overlay', blinkIntervalId = null, blinkState = true, isDragging = false, startX, startY, refPoints = [], drawPoints = [];    
     let layers = { ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, zIndex: 1, el: refImg }, draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, zIndex: 2, el: drawingImg } };
-    
     let activeTarget = 'draw', appEngineMode = 'sightsize', aspectWarningActive = false, isAlignedComputed = false;
-    
+
+    // --- MOBILE GESTURE STATE ---
+    let initDist = 0, initAngle = 0, initScale = 1, initRot = 0;
+
     enginePropBtn.addEventListener('click', () => { switchEngineMode('proportional'); });
     engineSightBtn.addEventListener('click', () => { switchEngineMode('sightsize'); });
     
@@ -206,23 +183,17 @@ document.addEventListener("DOMContentLoaded", () => {
             if (imgEl.src && imgEl.src.startsWith('blob:')) URL.revokeObjectURL(imgEl.src);
             imgEl.src = URL.createObjectURL(file); imgEl.classList.add('loaded');
             slotEl.innerHTML = `<span style="font-size:11px; color:var(--accent-success); font-weight:600;">✓ ${type.toUpperCase()} Ready</span><button class="btn-danger" style="padding:2px 6px; font-size:10px;">X</button>`;
-            
             imgEl.onload = () => {
-                if (appEngineMode === 'sightsize') {
-                    requestAnimationFrame(() => { requestAnimationFrame(triggerAutomatedSightSize); });
-                } else {
-                    updateTransforms();
-                }
+                if (appEngineMode === 'sightsize') { requestAnimationFrame(() => { requestAnimationFrame(triggerAutomatedSightSize); }); }
+                else { updateTransforms(); }
             };
-
             slotEl.querySelector('button').addEventListener('click', () => {
                 if (isAlignedComputed) return;
                 if (imgEl.src.startsWith('blob:')) URL.revokeObjectURL(imgEl.src);
                 imgEl.src = ''; imgEl.classList.remove('loaded'); clearMarkers(type);
                 slotEl.innerHTML = `<input type="file" id="upload-${type}" accept="image/*">`;
                 setupUploadListener(type, root.querySelector(`#upload-${type}`), imgEl, slotEl); 
-                aspectWarningActive = false;
-                updateTransforms();
+                aspectWarningActive = false; updateTransforms();
             });
         });
     }
@@ -231,30 +202,15 @@ document.addEventListener("DOMContentLoaded", () => {
     
     function triggerAutomatedSightSize() {
         if (!refImg.classList.contains('loaded') || !drawingImg.classList.contains('loaded')) return;
-        
         const refRatio = refImg.naturalWidth / refImg.naturalHeight;
         const drawRatio = drawingImg.naturalWidth / drawingImg.naturalHeight;
         aspectWarningActive = Math.abs(refRatio - drawRatio) > 0.01;
-        
         layers.ref.x = 0; layers.ref.y = 0; layers.ref.scale = 1; layers.ref.rot = 0;
         layers.draw.x = 0; layers.draw.y = 0; layers.draw.rot = 0;
-        
-        const rW = refImg.clientWidth || refImg.getBoundingClientRect().width;
         const rH = refImg.clientHeight || refImg.getBoundingClientRect().height;
-        const dW = drawingImg.clientWidth || drawingImg.getBoundingClientRect().width;
         const dH = drawingImg.clientHeight || drawingImg.getBoundingClientRect().height;
-        
-        if(rW === 0 || rH === 0 || dW === 0 || dH === 0) {
-            setTimeout(triggerAutomatedSightSize, 30);
-            return;
-        }
-
-        if (refRatio >= drawRatio) {
-            layers.draw.scale = rH / dH;
-        } else {
-            layers.draw.scale = rW / dW;
-        }
-        
+        if(rH === 0 || dH === 0) { setTimeout(triggerAutomatedSightSize, 30); return; }
+        layers.draw.scale = rH / dH;
         setMode('pan'); setDiagnosticMode('overlay');
     }
 
@@ -290,10 +246,8 @@ document.addEventListener("DOMContentLoaded", () => {
         diagnosticMode = mode; if (blinkIntervalId) { clearInterval(blinkIntervalId); blinkIntervalId = null; }
         viewport.classList.remove('audit-outline'); auditOverlayBtn.classList.toggle('active', mode === 'overlay');
         auditBlinkBtn.classList.toggle('active', mode === 'blink'); auditOutlineBtn.classList.toggle('active', mode === 'outline');
-        if (mode === 'blink') {
-            blinkState = true;
-            blinkIntervalId = setInterval(() => { blinkState = !blinkState; updateTransforms(); }, 330); 
-        } else if (mode === 'outline') { viewport.classList.add('audit-outline'); updateTransforms(); } else { updateTransforms(); }
+        if (mode === 'blink') { blinkState = true; blinkIntervalId = setInterval(() => { blinkState = !blinkState; updateTransforms(); }, 330); } 
+        else if (mode === 'outline') { viewport.classList.add('audit-outline'); updateTransforms(); } else { updateTransforms(); }
     }
     auditOverlayBtn.addEventListener('click', () => setDiagnosticMode('overlay')); auditBlinkBtn.addEventListener('click', () => setDiagnosticMode('blink')); auditOutlineBtn.addEventListener('click', () => setDiagnosticMode('outline'));
     
@@ -311,7 +265,34 @@ document.addEventListener("DOMContentLoaded", () => {
         } else { isDragging = true; startX = clientX - panX; startY = clientY - panY; }
     }
     viewport.addEventListener('mousedown', (e) => handleWorkspacePointerDown(e.clientX, e.clientY, e.button));
-    viewport.addEventListener('touchstart', (e) => { if(e.touches.length === 1) handleWorkspacePointerDown(e.touches[0].clientX, e.touches[0].clientY, 0); }, {passive: true});
+    viewport.addEventListener('touchstart', (e) => { 
+        if(e.touches.length === 1) handleWorkspacePointerDown(e.touches[0].clientX, e.touches[0].clientY, 0); 
+    }, {passive: true});
+
+    // --- INTEGRATED MULTI-TOUCH GESTURES ---
+    viewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            const t1 = e.touches[0], t2 = e.touches[1];
+            initDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+            initAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
+            initScale = layers[activeTarget].scale;
+            initRot = layers[activeTarget].rot;
+        }
+    }, {passive: false});
+
+    viewport.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            const t1 = e.touches[0], t2 = e.touches[1];
+            const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+            const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
+            layers[activeTarget].scale = initScale * (dist / initDist);
+            layers[activeTarget].rot = initRot + (angle - initAngle);
+            updateTransforms();
+        }
+    }, {passive: false});
+    // --- END GESTURES ---
+
     root.addEventListener('mousemove', (e) => { if (!isDragging || currentMode !== 'pan') return; panX = e.clientX - startX; panY = e.clientY - startY; updateTransforms(); });
     root.addEventListener('touchmove', (e) => { if (!isDragging || currentMode !== 'pan' || e.touches.length !== 1) return; panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; updateTransforms(); }, {passive: true});
     window.addEventListener('mouseup', () => isDragging = false); window.addEventListener('touchend', () => isDragging = false);
@@ -325,17 +306,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const R1 = refPoints[0], R2 = refPoints[1], D1 = drawPoints[0], D2 = drawPoints[1];
         const distR = Math.hypot(R2.x - R1.x, R2.y - R1.y), distD = Math.hypot(D2.x - D1.x, D2.y - D1.y);
         layers.ref.x = 0; layers.ref.y = 0; layers.ref.scale = 1; layers.ref.rot = 0;
-        
         const targetScale = distR / distD;
         const angleR = Math.atan2(R2.y - R1.y, R2.x - R1.x), angleD = Math.atan2(D2.y - D1.y, D2.x - D1.x);
         const rad = (angleR - angleD);
         const cos = Math.cos(rad), sin = Math.sin(rad);
-        
         layers.draw.scale = targetScale;
         layers.draw.rot = rad * (180 / Math.PI);
         layers.draw.x = R1.x - ((D1.x * cos - D1.y * sin) * targetScale); 
         layers.draw.y = R1.y - ((D1.x * sin + D1.y * cos) * targetScale);
-        
         isAlignedComputed = true; 
         chkMarkers.checked = false; panWrapper.classList.add('hide-markers'); setMode('pan'); setDiagnosticMode('overlay'); 
     });
@@ -344,9 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
         zoomScale = 1; panX = 0; panY = 0; isAlignedComputed = false; 
         layers.ref = { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, zIndex: 1, el: refImg }; layers.draw = { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, zIndex: 2, el: drawingImg };
         clearMarkers('all'); chkMarkers.checked = true; panWrapper.classList.remove('hide-markers'); setMode('pan'); setManualTarget('draw'); setDiagnosticMode('overlay');
-        if (appEngineMode === 'sightsize') {
-            requestAnimationFrame(() => { requestAnimationFrame(triggerAutomatedSightSize); });
-        }
+        if (appEngineMode === 'sightsize') { requestAnimationFrame(() => { requestAnimationFrame(triggerAutomatedSightSize); }); }
     }
     btnResetView.addEventListener('click', executeFullCleanReset);
     
@@ -388,7 +364,6 @@ document.addEventListener("DOMContentLoaded", () => {
             l.el.style.zIndex = l.zIndex;
         });
         refImg.classList.remove('apply-difference'); drawingImg.classList.remove('apply-difference');
-
         if (diagnosticMode === 'blink') {
             refImg.style.opacity = blinkState ? 1.0 : 0.0; drawingImg.style.opacity = blinkState ? 0.0 : 1.0;
         } else {
@@ -400,22 +375,16 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             else { refImg.style.opacity = layers.ref.opacity; drawingImg.style.opacity = layers.draw.opacity; }
         }
-
         const hasRef = refImg.classList.contains('loaded'), hasDraw = drawingImg.classList.contains('loaded');
-        
         strategyCard.classList.toggle('disabled-card', isAlignedComputed);
         sourceFilesCard.classList.toggle('disabled-card', isAlignedComputed);
         pinsPanel.classList.toggle('disabled-card', isAlignedComputed);
-        
         btnRef.disabled = !hasRef || isAlignedComputed; 
         btnDraw.disabled = !hasDraw || isAlignedComputed; 
         btnAlign.disabled = (!hasRef || !hasDraw || refPoints.length < 2 || drawPoints.length < 2 || isAlignedComputed);
-        
         btnRef.textContent = `Set Ref (${refPoints.length}/2)`; btnDraw.textContent = `Set Draw (${drawPoints.length}/2)`;
-        
         clearRefLink.style.display = (refPoints.length > 0 && !isAlignedComputed) ? 'inline-block' : 'none'; 
         clearDrawLink.style.display = (drawPoints.length > 0 && !isAlignedComputed) ? 'inline-block' : 'none';
-        
         if (!hasRef || !hasDraw) { statusDisplay.textContent = "Step 1: Import Images"; statusDisplay.style.color = "var(--text-main)"; } 
         else if (appEngineMode === 'sightsize') {
             statusDisplay.textContent = aspectWarningActive ? "⚠️ Crop Error: Aspect Ratio Mismatch!" : "Sight-Size: Locked (1:1 Ratio Overlay)";
