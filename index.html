@@ -68,21 +68,24 @@
         kbd { background: #222227; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: white; }
         
         @media (max-width: 768px) {
-    #image-overlay-rig-root { flex-direction: column; }
+    #image-overlay-rig-root { 
+        flex-direction: column; 
+        overflow-y: auto; /* Allow the entire app to scroll */
+        height: auto;     /* Stop locking to screen height */
+    }
     .sidebar { 
         width: 100%; 
-        max-height: 65vh; /* Increased from 45vh to give more initial space */
-        min-height: 300px; /* Ensures cards are always visible */
+        max-height: none; /* Remove the limit */
+        flex-shrink: 0; 
         border-right: none; 
         border-bottom: 1px solid var(--border-color); 
-        overflow-y: auto; /* Ensures scrollability if content exceeds height */
     }
     .main-content { 
-        height: 35vh; /* Shrinks the viewport to prioritize the control panel */
-        min-height: 250px; 
+        height: 50vh;    /* Keeps the viewport at a fixed size */
+        min-height: 350px; 
     }
     .instructions-footer { display: none; }
-        }
+}
     </style>
 </head>
 <body>
