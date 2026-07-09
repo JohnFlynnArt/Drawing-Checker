@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Art Studio - v0.5.1</title>
+    <title>Mobile Art Studio - v0.5.2</title>
     <style>
         body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: system-ui, sans-serif; }
         #viewport { flex: 1; position: relative; overflow: hidden; touch-action: none; background: #121214; }
@@ -35,12 +35,12 @@
             <input type="file" id="upload-draw" accept="image/*" style="display:none;">
         </div>
         <div class="dock-row">
-            <button id="mode-sight" class="active">Sight-Size</button>
-            <button id="mode-2point">2-Point Match</button>
+            <button id="mode-sight" class="active" onclick="switchMode('sight')">Sight-Size</button>
+            <button id="mode-2point" onclick="switchMode('2point')">2-Point Match</button>
         </div>
         <div class="dock-row">
-            <button id="target-ref-btn">Ref</button>
-            <button id="target-draw-btn" class="active">Draw</button>
+            <button id="target-ref-btn" onclick="switchTarget('ref')">Ref</button>
+            <button id="target-draw-btn" class="active" onclick="switchTarget('draw')">Draw</button>
             <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
         </div>
         <div class="dock-row">
@@ -51,12 +51,28 @@
     </div>
 
     <script>
-        const refImg = document.getElementById('img-reference'), drawingImg = document.getElementById('img-drawing'), viewport = document.getElementById('viewport');
+        const refImg = document.getElementById('img-reference'), drawingImg = document.getElementById('img-drawing');
         let activeTarget = 'draw', activeMode = 'sight';
         let layers = { 
             ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, el: refImg }, 
             draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, el: drawingImg } 
         };
+
+        function switchMode(mode) {
+            activeMode = mode;
+            document.getElementById('mode-sight').classList.toggle('active', mode === 'sight');
+            document.getElementById('mode-2point').classList.toggle('active', mode === '2point');
+            console.log("Mode switched to:", mode);
+        }
+
+        function switchTarget(target) {
+            activeTarget = target;
+            document.getElementById('target-ref-btn').classList.toggle('active', target === 'ref');
+            document.getElementById('target-draw-btn').classList.toggle('active', target === 'draw');
+            // Sync slider to current target's opacity
+            document.getElementById('opacity-slider').value = layers[target].opacity;
+            console.log("Target switched to:", target);
+        }
 
         function updateTransforms() {
             Object.keys(layers).forEach(k => {
@@ -66,24 +82,8 @@
             });
         }
 
-        // --- BUTTON TOGGLE UTILITY ---
-        function setToggle(id, group, callback) {
-            document.getElementById(id).addEventListener('click', () => {
-                group.forEach(btnId => document.getElementById(btnId).classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                callback();
-            });
-        }
-
-        setToggle('mode-sight', ['mode-sight', 'mode-2point'], () => activeMode = 'sight');
-        setToggle('mode-2point', ['mode-sight', 'mode-2point'], () => activeMode = '2point');
-        setToggle('target-ref-btn', ['target-ref-btn', 'target-draw-btn'], () => activeTarget = 'ref');
-        setToggle('target-draw-btn', ['target-ref-btn', 'target-draw-btn'], () => activeTarget = 'draw');
-
-        // Gesture & File Loader Logic (As before...)
-        // ... (truncated for brevity, ensure you copy the full logic if replacing)
-        
         // Gesture Logic
+        const viewport = document.getElementById('viewport');
         let isPanning = false, lastX, lastY, initialDist = 0, initialAngle = 0;
         viewport.addEventListener('touchmove', (e) => {
             e.preventDefault();
@@ -102,6 +102,11 @@
         }, {passive: false});
 
         viewport.addEventListener('touchend', () => { initialDist = 0; window.lastX = null; });
+
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            layers[activeTarget].opacity = parseFloat(e.target.value);
+            updateTransforms();
+        });
 
         ['upload-ref', 'upload-draw'].forEach(id => document.getElementById(id).addEventListener('change', (e) => {
             const img = (id === 'upload-ref') ? refImg : drawingImg;
