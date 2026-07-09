@@ -3,31 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Art Studio - v0.3.1</title>
+    <title>Mobile Art Studio - v0.3.3</title>
     <style>
         body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: system-ui, sans-serif; }
-        
         #viewport { flex: 1; position: relative; overflow: hidden; touch-action: none; background: #121214; }
-        
-        /* The container for images must exist and be visible */
-        .pan-wrapper { position: absolute; width: 100%; height: 100%; top:0; left:0; transform-origin: center center; }
-        
+        .pan-wrapper { position: absolute; width: 100%; height: 100%; top:0; left:0; pointer-events: none; }
         .layer { 
             max-width: 90%; max-height: 90%; position: absolute; 
             top: 50%; left: 50%; transform: translate(-50%, -50%); 
             display: none; box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
         .layer.loaded { display: block; }
-        
         #control-dock { height: 210px; background: #1a1a1e; border-top: 1px solid #333; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
         .dock-row { display: flex; gap: 10px; }
-        
         button { flex: 1; background: #333; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
         button.active { background: #3b82f6; border-color: #60a5fa; }
         input[type="range"] { flex: 2; accent-color: #3b82f6; }
         
-        .file-slot { flex: 1; border: 1px dashed #444; color: #9ba1a6; padding: 10px; border-radius: 8px; text-align: center; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .file-slot.ready { border-style: solid; border-color: #10b981; color: #10b981; }
+        /* Fixed: Using a real button trigger for better mobile reliability */
+        .btn-slot { flex: 1; background: #2a2a2e; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 8px; font-size: 11px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -41,8 +35,11 @@
     
     <div id="control-dock">
         <div class="dock-row">
-            <label class="file-slot" id="slot-ref"><span>Load Ref</span><input type="file" id="upload-ref" accept="image/*" hidden></label>
-            <label class="file-slot" id="slot-draw"><span>Load Draw</span><input type="file" id="upload-draw" accept="image/*" hidden></label>
+            <button class="btn-slot" onclick="document.getElementById('upload-ref').click()">Load Ref</button>
+            <input type="file" id="upload-ref" accept="image/*" style="display:none;">
+            
+            <button class="btn-slot" onclick="document.getElementById('upload-draw').click()">Load Draw</button>
+            <input type="file" id="upload-draw" accept="image/*" style="display:none;">
         </div>
         <div class="dock-row">
             <button id="engine-sightsize" class="active">Sight-Size</button>
@@ -68,44 +65,33 @@
         };
 
         function updateTransforms() {
-            panWrapper.style.transform = `scale(${zoomScale})`;
             Object.keys(layers).forEach(k => {
                 let l = layers[k];
-                // Using a more robust transform chain
                 l.el.style.transform = `translate(calc(-50% + ${l.x}px), calc(-50% + ${l.y}px)) rotate(${l.rot}deg) scale(${l.scale})`;
                 l.el.style.opacity = l.opacity;
             });
         }
 
-        function setupFileLoader(slotId, inputId, imgEl) {
-            const slot = document.getElementById(slotId), input = document.getElementById(inputId);
-            slot.addEventListener('click', () => input.click());
-            input.addEventListener('change', (e) => {
+        function handleUpload(inputId, imgEl) {
+            document.getElementById(inputId).addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
-                    // Revoke old object URL to free memory
-                    if (imgEl.src) URL.revokeObjectURL(imgEl.src);
-                    
-                    imgEl.onload = () => {
-                        imgEl.classList.add('loaded');
-                        updateTransforms();
-                    };
+                    imgEl.onload = () => { imgEl.classList.add('loaded'); updateTransforms(); };
                     imgEl.src = URL.createObjectURL(file);
-                    slot.classList.add('ready');
-                    slot.querySelector('span').textContent = "Image Loaded";
                 }
             });
         }
-        setupFileLoader('slot-ref', 'upload-ref', refImg);
-        setupFileLoader('slot-draw', 'upload-draw', drawingImg);
+        handleUpload('upload-ref', refImg);
+        handleUpload('upload-draw', drawingImg);
 
-        // Simple Drag Gesture
+        // Gesture Logic
         let isPanning = false, lastX, lastY;
         viewport.addEventListener('touchstart', (e) => {
             isPanning = true;
             lastX = e.touches[0].clientX;
             lastY = e.touches[0].clientY;
-        });
+        }, {passive: false});
+
         viewport.addEventListener('touchmove', (e) => {
             if (!isPanning) return;
             e.preventDefault();
@@ -115,6 +101,7 @@
             lastY = e.touches[0].clientY;
             updateTransforms();
         }, {passive: false});
+
         viewport.addEventListener('touchend', () => isPanning = false);
 
         // UI Listeners
