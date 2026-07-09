@@ -3,413 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dual-Engine Alignment Rig (Fixed Hybrid Logic)</title>
+    <title>Mobile Art Studio - v0.3</title>
     <style>
-        html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #121214; }
-        #image-overlay-rig-root {
-            --bg-main: #121214; --bg-sidebar: #1a1a1e; --bg-card: #222227; --border-color: #2f2f37;
-            --text-main: #f1f1f4; --text-muted: #9ba1a6; --accent-primary: #3b82f6; --accent-success: #10b981; --accent-danger: #ef4444; --accent-warning: #f59e0b;
-            font-family: system-ui, sans-serif; background: var(--bg-main); color: var(--text-main);
-            display: flex; width: 100vw; height: 100vh; overflow: hidden; position: relative; box-sizing: border-box;
-        }
-        #image-overlay-rig-root * { box-sizing: border-box; }
-        .sidebar { width: 320px; background: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 10; height: 100%; flex-shrink: 0; }
-        .sidebar-header { padding: 16px; border-bottom: 1px solid var(--border-color); }
-        .sidebar-header h1 { font-size: 14px; margin: 0; font-weight: 600; line-height: 1.3; }
-        .sidebar-scrollable-content { padding: 16px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 14px; }
-        .sidebar-static-bottom { padding: 16px; background: #17171b; border-top: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; }
-        .step-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-        .step-card.disabled-card { opacity: 0.4; pointer-events: none !important; }
-        .step-header-row { display: flex; justify-content: space-between; align-items: center; }
-        .step-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-muted); font-weight: 700; }
-        .clear-pins-link { font-size: 10px; color: var(--accent-danger); cursor: pointer; background: transparent; border: none; font-weight: 600; }
-        .clear-pins-link:disabled { opacity: 0.3; cursor: not-allowed; }
-        .upload-zone { background: rgba(0,0,0,0.15); border: 1px dashed var(--border-color); border-radius: 6px; padding: 8px; display: flex; align-items: center; justify-content: space-between; }
-        .upload-zone input[type="file"] { font-size: 11px; color: var(--text-muted); width: 100%; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .audit-btn-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 4px; }
-        button { background: #2d2d34; color: var(--text-main); border: 1px solid var(--border-color); padding: 8px 10px; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; user-select: none; }
-        button:disabled { opacity: 0.35; cursor: not-allowed; }
-        .engine-btn { background: #232329; border: 1px solid var(--border-color); color: var(--text-muted); }
-        .engine-btn.active { background: #3b82f6 !important; border-color: #60a5fa !important; color: white !important; font-weight: 600; }
-        .mode-btn.ref-style.active { background: var(--accent-danger); color: white; }
-        .mode-btn.draw-style.active { background: var(--accent-primary); color: white; }
-        .audit-select-btn.active { background: var(--accent-warning); color: #000; font-weight: 600; border-color: #fbbf24; }
-        .layer-selector button.active { background: #3a3a43; border-color: var(--accent-primary); }
-        .btn-primary { background: var(--accent-primary); border-color: transparent; font-weight: 600; color: white; }
-        .btn-success { background: var(--accent-success); border-color: transparent; font-weight: 600; color: white; }
-        .btn-danger { background: transparent; border-color: var(--accent-danger); color: var(--accent-danger); }
-        .slider-wrapper { display: flex; flex-direction: column; gap: 6px; }
-        .slider-header { display: flex; justify-content: space-between; font-size: 12px; }
-        input[type="range"] { width: 100%; accent-color: var(--accent-primary); }
-        .checkbox-wrapper { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .main-content { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px; position: relative; height: 100%; }
-        .viewport { 
-            position: relative; background: #09090b; border: 2px solid var(--border-color); 
-            overflow: hidden; width: 100%; height: 100%; border-radius: 8px; cursor: grab; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
-            touch-action: none; 
-        }
-        .viewport.marking-ref, .viewport.marking-ref * { border-color: var(--accent-danger) !important; cursor: crosshair !important; }
-        .viewport.marking-draw, .viewport.marking-draw * { border-color: var(--accent-primary) !important; cursor: crosshair !important; }
-        .pan-wrapper { position: absolute; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; top: 0; left: 0; }
-        .layer { max-width: 90%; max-height: 90%; pointer-events: none; display: none; transform-origin: center center; position: absolute; top: 50%; left: 50%; }
+        body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: system-ui, sans-serif; }
+        #viewport { flex: 1; position: relative; overflow: hidden; touch-action: none; background: #121214; }
+        .pan-wrapper { position: absolute; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; }
+        .layer { max-width: 90%; max-height: 90%; position: absolute; top: 50%; left: 50%; display: none; transition: opacity 0.1s; }
         .layer.loaded { display: block; }
-        .viewport.audit-outline .apply-difference { mix-blend-mode: difference; filter: contrast(2) brightness(1.2); }
-        .marker { position: absolute; width: 12px; height: 12px; border-radius: 50%; border: 1px solid white; transform: translate(-50%, -50%); z-index: 100; pointer-events: none; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; color: white; box-shadow: 0 0 4px rgba(0,0,0,0.6); }
-        .marker.ref { background: var(--accent-danger); }
-        .marker.draw { background: var(--accent-primary); }
-        .pan-wrapper.hide-markers .marker { display: none !important; }
-        .pan-wrapper.hide-draw-only .marker.draw { display: none !important; }
-        .pan-wrapper.hide-ref-only .marker.ref { display: none !important; }
-        .instructions-footer { margin-top: 12px; color: var(--text-muted); font-size: 11px; text-align: center; }
-        kbd { background: #222227; padding: 2px 4px; border-radius: 4px; font-family: monospace; color: white; }
-        @media (max-width: 768px) {
-            html, body { height: auto; overflow-y: auto; }
-            #image-overlay-rig-root { flex-direction: column; height: auto; min-height: 100vh; overflow: visible; }
-            .sidebar { width: 100%; max-height: none; flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
-            .main-content { height: 50vh; min-height: 350px; }
-            .instructions-footer { display: none; }
-        }
+        #control-dock { height: 210px; background: #1a1a1e; border-top: 1px solid #333; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
+        .dock-row { display: flex; gap: 10px; }
+        button { flex: 1; background: #333; color: #fff; border: 1px solid #444; padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+        button.active { background: #3b82f6; border-color: #60a5fa; }
+        input[type="range"] { flex: 2; accent-color: #3b82f6; }
+        .file-slot { flex: 1; border: 1px dashed #444; color: #9ba1a6; padding: 10px; border-radius: 8px; text-align: center; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .file-slot.ready { border-style: solid; border-color: #10b981; color: #10b981; }
     </style>
 </head>
 <body>
-<div id="image-overlay-rig-root">
-    <div class="sidebar">
-        <div class="sidebar-header"><h1 id="status-display">Import Images</h1></div>
-        <div class="sidebar-scrollable-content">
-            <div class="step-card" id="strategy-card">
-                <div class="step-header-row"><span class="step-title">Choose Alignment Strategy</span></div>
-                <div class="btn-group">
-                    <button id="engine-sightsize" class="engine-btn active">Sight-Size Match</button>
-                    <button id="engine-proportional" class="engine-btn">2-Point Match</button>
-                </div>
-            </div>
-            <div class="step-card" id="source-files-card">
-                <div class="step-header-row"><span class="step-title">1. Source Files</span></div>
-                <div style="font-size: 11px; margin-bottom: 2px; color: var(--text-muted);">Reference Image</div>
-                <div class="upload-zone" id="slot-ref"><input type="file" id="upload-ref" accept="image/*"></div>
-                <div style="font-size: 11px; margin-top: 8px; margin-bottom: 2px; color: var(--text-muted);">Drawing Image</div>
-                <div class="upload-zone" id="slot-draw"><input type="file" id="upload-draw" accept="image/*"></div>
-            </div>
-            <div class="step-card" id="pins-config-panel" style="display: none;">
-                <div class="step-header-row">
-                    <span class="step-title">2. Match Pins</span>
-                    <div>
-                        <button id="clear-ref-link" class="clear-pins-link" style="margin-right:8px; display:none;">Clear Ref</button>
-                        <button id="clear-draw-link" class="clear-pins-link" style="display:none;">Clear Draw</button>
-                    </div>
-                </div>
-                <div class="btn-group">
-                    <button id="btn-mode-ref" class="mode-btn ref-style" disabled>Set Ref (0/2)</button>
-                    <button id="btn-mode-draw" class="mode-btn draw-style" disabled>Set Draw (0/2)</button>
-                </div>
-            </div>
-            <div class="step-card" id="execution-card">
-                <div class="step-header-row"><span class="step-title">3. Execution</span></div>
-                <button id="btn-align" class="btn-primary" disabled>Compute Alignment</button>
-                <div class="checkbox-wrapper"><input type="checkbox" id="chk-markers" checked><label for="chk-markers">Show Anchors</label></div>
-            </div>
-            <div class="step-card">
-                <div class="step-header-row"><span class="step-title">4. Validation Engine</span></div>
-                <div class="audit-btn-group">
-                    <button id="audit-mode-overlay" class="audit-select-btn active">Overlay</button>
-                    <button id="audit-mode-blink" class="audit-select-btn">Blink</button>
-                    <button id="audit-mode-outline" class="audit-select-btn">Outline</button>
-                </div>
-            </div>
-        </div>
-        <div class="sidebar-static-bottom">
-            <div class="btn-group layer-selector"><button id="target-ref-btn">Target Ref</button><button id="target-draw-btn" class="active">Target Draw</button></div>
-            <div class="slider-wrapper"><div class="slider-header"><span id="opacity-label">Drawing Opacity</span></div><input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5"></div>
-            <button id="btn-reset-view" class="btn-danger">Reset All</button>
+
+    <div id="viewport">
+        <div class="pan-wrapper" id="pan-wrapper">
+            <img id="img-reference" class="layer" alt="Ref">
+            <img id="img-drawing" class="layer" alt="Draw">
         </div>
     </div>
-    <div class="main-content">
-        <div class="viewport" id="viewport">
-            <div class="pan-wrapper" id="pan-wrapper">
-                <img id="img-reference" class="layer" alt="Reference">
-                <img id="img-drawing" class="layer" alt="Drawing">
-            </div>
+    
+    <div id="control-dock">
+        <div class="dock-row">
+            <label class="file-slot" id="slot-ref"><span>Load Ref</span><input type="file" id="upload-ref" accept="image/*" hidden></label>
+            <label class="file-slot" id="slot-draw"><span>Load Draw</span><input type="file" id="upload-draw" accept="image/*" hidden></label>
         </div>
-        <div class="instructions-footer"><strong>Manual Precision Control:</strong> Shifts are scaled to <kbd>0.5px</kbd> steps via <kbd>Arrow Keys</kbd>.<br>Hold <kbd>Shift</kbd> + Arrows to adjust scale/rotation smoothly. Right-click workspace to wipe active target points.</div>
+        <div class="dock-row">
+            <button id="engine-sightsize" class="active">Sight-Size</button>
+            <button id="engine-2point">2-Point Match</button>
+        </div>
+        <div class="dock-row">
+            <button id="target-ref-btn">Ref</button>
+            <button id="target-draw-btn" class="active">Draw</button>
+            <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
+        </div>
     </div>
-</div>
 
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const root = document.getElementById('image-overlay-rig-root'); if (!root) return;
-    const refImg = root.querySelector('#img-reference'), drawingImg = root.querySelector('#img-drawing'), viewport = root.querySelector('#viewport'), panWrapper = root.querySelector('#pan-wrapper');
-    const btnRef = root.querySelector('#btn-mode-ref'), btnDraw = root.querySelector('#btn-mode-draw'), btnAlign = root.querySelector('#btn-align'), btnResetView = root.querySelector('#btn-reset-view');
-    const opacitySlider = root.querySelector('#opacity-slider'), opacityLabel = root.querySelector('#opacity-label'), chkMarkers = root.querySelector('#chk-markers'), statusDisplay = root.querySelector('#status-display');
-    const slotRef = root.querySelector('#slot-ref'), slotDraw = root.querySelector('#slot-draw'), targetRefBtn = root.querySelector('#target-ref-btn'), targetDrawBtn = root.querySelector('#target-draw-btn');
-    const clearRefLink = root.querySelector('#clear-ref-link'), clearDrawLink = root.querySelector('#clear-draw-link'), pinsPanel = root.querySelector('#pins-config-panel');
-    const strategyCard = root.querySelector('#strategy-card'), sourceFilesCard = root.querySelector('#source-files-card');
-    const auditOverlayBtn = root.querySelector('#audit-mode-overlay'), auditBlinkBtn = root.querySelector('#audit-mode-blink'), auditOutlineBtn = root.querySelector('#audit-mode-outline');
-    const enginePropBtn = root.querySelector('#engine-proportional'), engineSightBtn = root.querySelector('#engine-sightsize');
-    
-    let zoomScale = 1, panX = 0, panY = 0, currentMode = 'pan', diagnosticMode = 'overlay', blinkIntervalId = null, blinkState = true, isDragging = false, startX, startY, refPoints = [], drawPoints = [];    
-    let layers = { ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, zIndex: 1, el: refImg }, draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, zIndex: 2, el: drawingImg } };
-    let activeTarget = 'draw', appEngineMode = 'sightsize', aspectWarningActive = false, isAlignedComputed = false;
+    <script>
+        const refImg = document.getElementById('img-reference');
+        const drawingImg = document.getElementById('img-drawing');
+        const panWrapper = document.getElementById('pan-wrapper');
+        const viewport = document.getElementById('viewport');
+        
+        let zoomScale = 1, panX = 0, panY = 0, activeTarget = 'draw';
+        let layers = { 
+            ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, el: refImg }, 
+            draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, el: drawingImg } 
+        };
 
-    // --- MOBILE GESTURE STATE ---
-    let initDist = 0, initAngle = 0, initScale = 1, initRot = 0;
-
-    enginePropBtn.addEventListener('click', () => { switchEngineMode('proportional'); });
-    engineSightBtn.addEventListener('click', () => { switchEngineMode('sightsize'); });
-    
-    function switchEngineMode(mode) {
-        if (appEngineMode === mode || isAlignedComputed) return;
-        appEngineMode = mode;
-        enginePropBtn.classList.toggle('active', mode === 'proportional');
-        engineSightBtn.classList.toggle('active', mode === 'sightsize');
-        pinsPanel.style.display = mode === 'sightsize' ? 'none' : 'flex';
-        executeFullCleanReset();
-    }
-
-    targetRefBtn.addEventListener('click', () => setManualTarget('ref')); targetDrawBtn.addEventListener('click', () => setManualTarget('draw'));
-    function setManualTarget(target) {
-        activeTarget = target; targetRefBtn.classList.toggle('active', target === 'ref'); targetDrawBtn.classList.toggle('active', target === 'draw');
-        if (target === 'ref') { layers.ref.zIndex = 2; layers.draw.zIndex = 1; } else { layers.ref.zIndex = 1; layers.draw.zIndex = 2; }
-        opacitySlider.value = layers[activeTarget].opacity; opacityLabel.textContent = `${target === 'ref' ? 'Reference' : 'Drawing'} Opacity`; updateTransforms();
-    }
-    opacitySlider.addEventListener('input', (e) => { layers[activeTarget].opacity = parseFloat(e.target.value); updateTransforms(); });
-    
-    function setupUploadListener(type, inputEl, imgEl, slotEl) {
-        if (!inputEl) return;
-        inputEl.addEventListener('change', (e) => {
-            if (isAlignedComputed) return;
-            const file = e.target.files[0]; if (!file) return;
-            if (imgEl.src && imgEl.src.startsWith('blob:')) URL.revokeObjectURL(imgEl.src);
-            imgEl.src = URL.createObjectURL(file); imgEl.classList.add('loaded');
-            slotEl.innerHTML = `<span style="font-size:11px; color:var(--accent-success); font-weight:600;">✓ ${type.toUpperCase()} Ready</span><button class="btn-danger" style="padding:2px 6px; font-size:10px;">X</button>`;
-            imgEl.onload = () => {
-                if (appEngineMode === 'sightsize') { requestAnimationFrame(() => { requestAnimationFrame(triggerAutomatedSightSize); }); }
-                else { updateTransforms(); }
-            };
-            slotEl.querySelector('button').addEventListener('click', () => {
-                if (isAlignedComputed) return;
-                if (imgEl.src.startsWith('blob:')) URL.revokeObjectURL(imgEl.src);
-                imgEl.src = ''; imgEl.classList.remove('loaded'); clearMarkers(type);
-                slotEl.innerHTML = `<input type="file" id="upload-${type}" accept="image/*">`;
-                setupUploadListener(type, root.querySelector(`#upload-${type}`), imgEl, slotEl); 
-                aspectWarningActive = false; updateTransforms();
+        function updateTransforms() {
+            panWrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+            Object.keys(layers).forEach(k => {
+                let l = layers[k];
+                l.el.style.transform = `translate(-50%, -50%) translate(${l.x}px, ${l.y}px) rotate(${l.rot}deg) scale(${l.scale})`;
+                l.el.style.opacity = l.opacity;
             });
-        });
-    }
-    setupUploadListener('ref', root.querySelector('#upload-ref'), refImg, slotRef); setupUploadListener('draw', root.querySelector('#upload-draw'), drawingImg, slotDraw);
-    chkMarkers.addEventListener('change', (e) => { panWrapper.classList.toggle('hide-markers', !e.target.checked); });
-    
-    function triggerAutomatedSightSize() {
-        if (!refImg.classList.contains('loaded') || !drawingImg.classList.contains('loaded')) return;
-        const refRatio = refImg.naturalWidth / refImg.naturalHeight;
-        const drawRatio = drawingImg.naturalWidth / drawingImg.naturalHeight;
-        aspectWarningActive = Math.abs(refRatio - drawRatio) > 0.01;
-        layers.ref.x = 0; layers.ref.y = 0; layers.ref.scale = 1; layers.ref.rot = 0;
-        layers.draw.x = 0; layers.draw.y = 0; layers.draw.rot = 0;
-        const rH = refImg.clientHeight || refImg.getBoundingClientRect().height;
-        const dH = drawingImg.clientHeight || drawingImg.getBoundingClientRect().height;
-        if(rH === 0 || dH === 0) { setTimeout(triggerAutomatedSightSize, 30); return; }
-        layers.draw.scale = rH / dH;
-        setMode('pan'); setDiagnosticMode('overlay');
-    }
-
-    function clearMarkers(type) {
-        if (isAlignedComputed) return; 
-        if (type === 'ref' || type === 'all') { refPoints = []; root.querySelectorAll('.marker.ref').forEach(m => m.remove()); }
-        if (type === 'draw' || type === 'all') { drawPoints = []; root.querySelectorAll('.marker.draw').forEach(m => m.remove()); }
-        if (refPoints.length < 2 || drawPoints.length < 2) btnAlign.disabled = true;
-        setMode(type === 'ref' ? 'mark-ref' : (type === 'draw' ? 'mark-draw' : 'pan'));
-    }
-    clearRefLink.addEventListener('click', () => { if(!isAlignedComputed) clearMarkers('ref'); }); 
-    clearDrawLink.addEventListener('click', () => { if(!isAlignedComputed) clearMarkers('draw'); });
-    
-    viewport.addEventListener('contextmenu', (e) => { 
-        e.preventDefault(); 
-        if (isAlignedComputed) return; 
-        if (currentMode === 'mark-ref') clearMarkers('ref'); else if (currentMode === 'mark-draw') clearMarkers('draw'); 
-    });
-    
-    btnRef.addEventListener('click', () => { if(!isAlignedComputed) setMode(currentMode === 'mark-ref' ? 'pan' : 'mark-ref'); }); 
-    btnDraw.addEventListener('click', () => { if(!isAlignedComputed) setMode(currentMode === 'mark-draw' ? 'pan' : 'mark-draw'); });
-    
-    function setMode(mode) {
-        if (isAlignedComputed && mode !== 'pan') return; 
-        currentMode = mode; viewport.className = 'viewport'; if (diagnosticMode === 'outline') viewport.classList.add('audit-outline');
-        if (mode === 'mark-ref') viewport.classList.add('marking-ref'); if (mode === 'mark-draw') viewport.classList.add('marking-draw');
-        btnRef.classList.toggle('active', mode === 'mark-ref'); btnDraw.classList.toggle('active', mode === 'mark-draw');
-        panWrapper.classList.remove('hide-draw-only', 'hide-ref-only');
-        if (mode === 'mark-ref') panWrapper.classList.add('hide-draw-only'); else if (mode === 'mark-draw') panWrapper.classList.add('hide-ref-only');
-        updateTransforms();
-    }
-    function setDiagnosticMode(mode) {
-        diagnosticMode = mode; if (blinkIntervalId) { clearInterval(blinkIntervalId); blinkIntervalId = null; }
-        viewport.classList.remove('audit-outline'); auditOverlayBtn.classList.toggle('active', mode === 'overlay');
-        auditBlinkBtn.classList.toggle('active', mode === 'blink'); auditOutlineBtn.classList.toggle('active', mode === 'outline');
-        if (mode === 'blink') { blinkState = true; blinkIntervalId = setInterval(() => { blinkState = !blinkState; updateTransforms(); }, 330); } 
-        else if (mode === 'outline') { viewport.classList.add('audit-outline'); updateTransforms(); } else { updateTransforms(); }
-    }
-    auditOverlayBtn.addEventListener('click', () => setDiagnosticMode('overlay')); auditBlinkBtn.addEventListener('click', () => setDiagnosticMode('blink')); auditOutlineBtn.addEventListener('click', () => setDiagnosticMode('outline'));
-    
-    function handleWorkspacePointerDown(clientX, clientY, buttonType = 0) {
-        if (buttonType === 2) return; 
-        if (currentMode !== 'pan') {
-            if (isAlignedComputed) return;
-            const rect = viewport.getBoundingClientRect();
-            const x = (clientX - (rect.left + rect.width / 2) - panX) / zoomScale;
-            const y = (clientY - (rect.top + rect.height / 2) - panY) / zoomScale;
-            if (currentMode === 'mark-ref' && refPoints.length < 2) { refPoints.push({x, y}); dropVisualMarker(x, y, 'ref', refPoints.length); }
-            else if (currentMode === 'mark-draw' && drawPoints.length < 2) { drawPoints.push({x, y}); dropVisualMarker(x, y, 'draw', drawPoints.length); }
-            if (refPoints.length === 2 && drawPoints.length === 2) btnAlign.disabled = false;
-            updateTransforms();
-        } else { isDragging = true; startX = clientX - panX; startY = clientY - panY; }
-    }
-    viewport.addEventListener('mousedown', (e) => handleWorkspacePointerDown(e.clientX, e.clientY, e.button));
-    viewport.addEventListener('touchstart', (e) => { 
-        if(e.touches.length === 1) handleWorkspacePointerDown(e.touches[0].clientX, e.touches[0].clientY, 0); 
-    }, {passive: true});
-
-// --- INTEGRATED HYBRID GESTURES (DOM-Class Aware) ---
-    viewport.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            const t1 = e.touches[0], t2 = e.touches[1];
-            initDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-            initAngle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
-            
-            // Check the actual class of the viewport to determine context
-            if (viewport.classList.contains('marking-ref') || viewport.classList.contains('marking-draw')) {
-                initScale = layers[activeTarget].scale;
-                initRot = layers[activeTarget].rot;
-            } else {
-                initScale = zoomScale;
-            }
         }
-    }, {passive: false});
 
-    viewport.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2) {
+        // Gesture Logic
+        let isPanning = false;
+        let lastX, lastY;
+
+        viewport.addEventListener('touchstart', (e) => {
+            isPanning = true;
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
+        });
+
+        viewport.addEventListener('touchmove', (e) => {
+            if (!isPanning) return;
             e.preventDefault();
-            const t1 = e.touches[0], t2 = e.touches[1];
-            const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-            const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
+            let dx = e.touches[0].clientX - lastX;
+            let dy = e.touches[0].clientY - lastY;
             
-            // Re-check the class state dynamically
-            if (viewport.classList.contains('marking-ref') || viewport.classList.contains('marking-draw')) {
-                layers[activeTarget].scale = initScale * (dist / initDist);
-                layers[activeTarget].rot = initRot + (angle - initAngle);
-            } else {
-                zoomScale = initScale * (dist / initDist);
-            }
+            // Apply movement to the Active Layer
+            layers[activeTarget].x += dx;
+            layers[activeTarget].y += dy;
+            
+            lastX = e.touches[0].clientX;
+            lastY = e.touches[0].clientY;
             updateTransforms();
-        }
-    }, {passive: false});
-    // --- END GESTURES ---
+        }, {passive: false});
 
-    root.addEventListener('mousemove', (e) => { if (!isDragging || currentMode !== 'pan') return; panX = e.clientX - startX; panY = e.clientY - startY; updateTransforms(); });
-    root.addEventListener('touchmove', (e) => { if (!isDragging || currentMode !== 'pan' || e.touches.length !== 1) return; panX = e.touches[0].clientX - startX; panY = e.touches[0].clientY - startY; updateTransforms(); }, {passive: true});
-    window.addEventListener('mouseup', () => isDragging = false); window.addEventListener('touchend', () => isDragging = false);
-    
-    function dropVisualMarker(x, y, className, pointIndex) {
-        const marker = document.createElement('div'); marker.className = `marker ${className}`; marker.style.left = `calc(50% + ${x}px)`; marker.style.top = `calc(50% + ${y}px)`; marker.textContent = pointIndex; panWrapper.appendChild(marker);
-    }
-    
-    btnAlign.addEventListener('click', () => {
-        if (refPoints.length < 2 || drawPoints.length < 2 || isAlignedComputed) return;
-        const R1 = refPoints[0], R2 = refPoints[1], D1 = drawPoints[0], D2 = drawPoints[1];
-        const distR = Math.hypot(R2.x - R1.x, R2.y - R1.y), distD = Math.hypot(D2.x - D1.x, D2.y - D1.y);
-        layers.ref.x = 0; layers.ref.y = 0; layers.ref.scale = 1; layers.ref.rot = 0;
-        const targetScale = distR / distD;
-        const angleR = Math.atan2(R2.y - R1.y, R2.x - R1.x), angleD = Math.atan2(D2.y - D1.y, D2.x - D1.x);
-        const rad = (angleR - angleD);
-        const cos = Math.cos(rad), sin = Math.sin(rad);
-        layers.draw.scale = targetScale;
-        layers.draw.rot = rad * (180 / Math.PI);
-        layers.draw.x = R1.x - ((D1.x * cos - D1.y * sin) * targetScale); 
-        layers.draw.y = R1.y - ((D1.x * sin + D1.y * cos) * targetScale);
-        isAlignedComputed = true; 
-        chkMarkers.checked = false; panWrapper.classList.add('hide-markers'); setMode('pan'); setDiagnosticMode('overlay'); 
-    });
-    
-    function executeFullCleanReset() {
-        zoomScale = 1; panX = 0; panY = 0; isAlignedComputed = false; 
-        layers.ref = { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, zIndex: 1, el: refImg }; layers.draw = { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, zIndex: 2, el: drawingImg };
-        clearMarkers('all'); chkMarkers.checked = true; panWrapper.classList.remove('hide-markers'); setMode('pan'); setManualTarget('draw'); setDiagnosticMode('overlay');
-        if (appEngineMode === 'sightsize') { requestAnimationFrame(() => { requestAnimationFrame(triggerAutomatedSightSize); }); }
-    }
-    btnResetView.addEventListener('click', executeFullCleanReset);
-    
-    viewport.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const rect = viewport.getBoundingClientRect(), mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top;
-        const vcx = rect.width / 2, vcy = rect.height / 2;
-        const targetX = (mouseX - vcx - panX) / zoomScale, targetY = (mouseY - vcy - panY) / zoomScale;
-        let nextScale = Math.max(0.1, Math.min(zoomScale + (e.deltaY < 0 ? 0.05 : -0.05), 8));
-        panX = mouseX - vcx - (targetX * nextScale); panY = mouseY - vcy - (targetY * nextScale); zoomScale = nextScale;
-        updateTransforms();
-    }, { passive: false });
-    
-    function executeStepAdjustment(direction, useAlternativeTransform) {
-        let active = layers[activeTarget];
-        if (useAlternativeTransform) {
-            if (direction === 'up') active.scale += 0.005; 
-            else if (direction === 'down') active.scale = Math.max(0.005, active.scale - 0.005);
-            else if (direction === 'left') active.rot -= 0.25; 
-            else if (direction === 'right') active.rot += 0.25;
-        } else {
-            if (direction === 'up') active.y -= 0.5; 
-            else if (direction === 'down') active.y += 0.5;
-            else if (direction === 'left') active.x -= 0.5; 
-            else if (direction === 'right') active.x += 0.5;
+        viewport.addEventListener('touchend', () => isPanning = false);
+
+        // Standard setup for loaders/UI...
+        function setupFileLoader(slotId, inputId, imgEl) {
+            const slot = document.getElementById(slotId), input = document.getElementById(inputId);
+            slot.addEventListener('click', () => input.click());
+            input.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    imgEl.onload = () => { imgEl.classList.add('loaded'); updateTransforms(); };
+                    imgEl.src = URL.createObjectURL(e.target.files[0]);
+                    slot.classList.add('ready');
+                    slot.querySelector('span').textContent = "Loaded";
+                }
+            });
         }
-        updateTransforms();
-    }
-    window.addEventListener('keydown', (e) => {
-        if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
-        if(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) { e.preventDefault(); const dirMap = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }; executeStepAdjustment(dirMap[e.key], e.shiftKey); }
-    });
-    
-    function updateTransforms() {
-        panWrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
-        Object.keys(layers).forEach(k => {
-            let l = layers[k]; 
-            l.el.style.transform = `translate(-50%, -50%) translate(${l.x}px, ${l.y}px) rotate(${l.rot}deg) scale(${l.scale})`;
-            l.el.style.zIndex = l.zIndex;
+        setupFileLoader('slot-ref', 'upload-ref', refImg);
+        setupFileLoader('slot-draw', 'upload-draw', drawingImg);
+
+        document.getElementById('target-ref-btn').addEventListener('click', () => { 
+            activeTarget = 'ref'; 
+            document.getElementById('target-ref-btn').classList.add('active');
+            document.getElementById('target-draw-btn').classList.remove('active');
         });
-        refImg.classList.remove('apply-difference'); drawingImg.classList.remove('apply-difference');
-        if (diagnosticMode === 'blink') {
-            refImg.style.opacity = blinkState ? 1.0 : 0.0; drawingImg.style.opacity = blinkState ? 0.0 : 1.0;
-        } else {
-            if (currentMode === 'mark-ref') { refImg.style.opacity = 1.0; drawingImg.style.opacity = 0.05; } 
-            else if (currentMode === 'mark-draw') { refImg.style.opacity = 0.2; drawingImg.style.opacity = 1.0; } 
-            else if (diagnosticMode === 'outline') { 
-                refImg.style.opacity = 1.0; drawingImg.style.opacity = 1.0; 
-                (activeTarget === 'draw' ? drawingImg : refImg).classList.add('apply-difference');
-            }
-            else { refImg.style.opacity = layers.ref.opacity; drawingImg.style.opacity = layers.draw.opacity; }
-        }
-        const hasRef = refImg.classList.contains('loaded'), hasDraw = drawingImg.classList.contains('loaded');
-        strategyCard.classList.toggle('disabled-card', isAlignedComputed);
-        sourceFilesCard.classList.toggle('disabled-card', isAlignedComputed);
-        pinsPanel.classList.toggle('disabled-card', isAlignedComputed);
-        btnRef.disabled = !hasRef || isAlignedComputed; 
-        btnDraw.disabled = !hasDraw || isAlignedComputed; 
-        btnAlign.disabled = (!hasRef || !hasDraw || refPoints.length < 2 || drawPoints.length < 2 || isAlignedComputed);
-        btnRef.textContent = `Set Ref (${refPoints.length}/2)`; btnDraw.textContent = `Set Draw (${drawPoints.length}/2)`;
-        clearRefLink.style.display = (refPoints.length > 0 && !isAlignedComputed) ? 'inline-block' : 'none'; 
-        clearDrawLink.style.display = (drawPoints.length > 0 && !isAlignedComputed) ? 'inline-block' : 'none';
-        if (!hasRef || !hasDraw) { statusDisplay.textContent = "Step 1: Import Images"; statusDisplay.style.color = "var(--text-main)"; } 
-        else if (appEngineMode === 'sightsize') {
-            statusDisplay.textContent = aspectWarningActive ? "⚠️ Crop Error: Aspect Ratio Mismatch!" : "Sight-Size: Locked (1:1 Ratio Overlay)";
-            statusDisplay.style.color = aspectWarningActive ? "var(--accent-danger)" : "var(--accent-success)";
-        } else {
-            statusDisplay.style.color = "var(--text-main)";
-            if (refPoints.length < 2 && !isAlignedComputed) statusDisplay.textContent = "Step 2: Place 2 Ref Pins";
-            else if (drawPoints.length < 2 && !isAlignedComputed) statusDisplay.textContent = "Step 3: Place 2 Match Pins";
-            else statusDisplay.textContent = isAlignedComputed ? "Alignment Locked. Reset to recalculate." : `Audit Active: ${diagnosticMode.toUpperCase()}`;
-        }
-    }
-    updateTransforms();
-});
-</script>
+        document.getElementById('target-draw-btn').addEventListener('click', () => { 
+            activeTarget = 'draw'; 
+            document.getElementById('target-draw-btn').classList.add('active');
+            document.getElementById('target-ref-btn').classList.remove('active');
+        });
+        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+            layers[activeTarget].opacity = parseFloat(e.target.value);
+            updateTransforms();
+        });
+    </script>
 </body>
 </html>
