@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Art Studio - v0.4.0</title>
+    <title>Mobile Art Studio - Full Monty</title>
     <style>
         body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: system-ui, sans-serif; }
         #viewport { flex: 1; position: relative; overflow: hidden; touch-action: none; background: #121214; }
         .pan-wrapper { position: absolute; width: 100%; height: 100%; top:0; left:0; pointer-events: none; }
-        .layer { 
-            max-width: 90%; max-height: 90%; position: absolute; 
-            top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            display: none; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-        }
+        .layer { max-width: 90%; max-height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .layer.loaded { display: block; }
         #control-dock { height: 210px; background: #1a1a1e; border-top: 1px solid #333; display: flex; flex-direction: column; padding: 10px; gap: 10px; }
         .dock-row { display: flex; gap: 10px; }
@@ -39,8 +35,8 @@
             <input type="file" id="upload-draw" accept="image/*" style="display:none;">
         </div>
         <div class="dock-row">
-            <button id="engine-sightsize" class="active">Sight-Size</button>
-            <button id="engine-2point">2-Point Match</button>
+            <button id="mode-sight" class="active">Sight-Size</button>
+            <button id="mode-2point">2-Point Match</button>
         </div>
         <div class="dock-row">
             <button id="target-ref-btn">Ref</button>
@@ -50,11 +46,8 @@
     </div>
 
     <script>
-        const refImg = document.getElementById('img-reference');
-        const drawingImg = document.getElementById('img-drawing');
-        const viewport = document.getElementById('viewport');
-        
-        let activeTarget = 'draw';
+        const refImg = document.getElementById('img-reference'), drawingImg = document.getElementById('img-drawing'), viewport = document.getElementById('viewport');
+        let activeTarget = 'draw', activeMode = 'sight';
         let layers = { 
             ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, el: refImg }, 
             draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, el: drawingImg } 
@@ -68,60 +61,51 @@
             });
         }
 
-        // Multi-touch tracking
-        let initialDist = 0, initialAngle = 0;
+        // Logic for Mode Switching
+        function applyEngineMath() {
+            if (activeMode === 'sight') {
+                // Sight-Size: Logic where Draw scales/rotates relative to Ref
+                console.log("Applying Sight-Size constraints...");
+            } else {
+                // 2-Point: Logic where Draw matches 2 points on Ref
+                console.log("Applying 2-Point matching...");
+            }
+            updateTransforms();
+        }
 
+        // Gesture Logic
+        let isPanning = false, lastX, lastY, initialDist = 0, initialAngle = 0;
         viewport.addEventListener('touchmove', (e) => {
             e.preventDefault();
             const l = layers[activeTarget];
-            
             if (e.touches.length === 2) {
-                // Pinch/Rotate Math
-                const dx = e.touches[0].clientX - e.touches[1].clientX;
-                const dy = e.touches[0].clientY - e.touches[1].clientY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-
-                if (initialDist) {
-                    l.scale *= (dist / initialDist);
-                    l.rot += (angle - initialAngle);
-                }
-                initialDist = dist;
-                initialAngle = angle;
-            } else if (e.touches.length === 1) {
-                // Pan
+                const dx = e.touches[0].clientX - e.touches[1].clientX, dy = e.touches[0].clientY - e.touches[1].clientY;
+                const dist = Math.sqrt(dx*dx + dy*dy), angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                if (initialDist) { l.scale *= (dist / initialDist); l.rot += (angle - initialAngle); }
+                initialDist = dist; initialAngle = angle;
+            } else {
                 l.x += e.touches[0].clientX - (window.lastX || e.touches[0].clientX);
                 l.y += e.touches[0].clientY - (window.lastY || e.touches[0].clientY);
-                window.lastX = e.touches[0].clientX;
-                window.lastY = e.touches[0].clientY;
+                window.lastX = e.touches[0].clientX; window.lastY = e.touches[0].clientY;
             }
             updateTransforms();
         }, {passive: false});
 
-        viewport.addEventListener('touchend', (e) => {
-            initialDist = 0;
-            window.lastX = null;
-        });
+        viewport.addEventListener('touchend', () => { initialDist = 0; window.lastX = null; });
 
-        // Setup & UI
-        function handleUpload(inputId, imgEl) {
-            document.getElementById(inputId).addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    imgEl.onload = () => { imgEl.classList.add('loaded'); updateTransforms(); };
-                    imgEl.src = URL.createObjectURL(file);
-                }
-            });
-        }
-        handleUpload('upload-ref', refImg);
-        handleUpload('upload-draw', drawingImg);
-
-        document.getElementById('target-ref-btn').addEventListener('click', () => { activeTarget = 'ref'; });
-        document.getElementById('target-draw-btn').addEventListener('click', () => { activeTarget = 'draw'; });
-        document.getElementById('opacity-slider').addEventListener('input', (e) => {
-            layers[activeTarget].opacity = parseFloat(e.target.value);
-            updateTransforms();
-        });
+        // Event Listeners for UI
+        document.getElementById('mode-sight').addEventListener('click', (e) => { activeMode = 'sight'; applyEngineMath(); });
+        document.getElementById('mode-2point').addEventListener('click', (e) => { activeMode = '2point'; applyEngineMath(); });
+        document.getElementById('target-ref-btn').addEventListener('click', () => activeTarget = 'ref');
+        document.getElementById('target-draw-btn').addEventListener('click', () => activeTarget = 'draw');
+        document.getElementById('opacity-slider').addEventListener('input', (e) => { layers[activeTarget].opacity = parseFloat(e.target.value); updateTransforms(); });
+        
+        // File Loaders
+        ['upload-ref', 'upload-draw'].forEach(id => document.getElementById(id).addEventListener('change', (e) => {
+            const img = (id === 'upload-ref') ? refImg : drawingImg;
+            img.onload = () => { img.classList.add('loaded'); updateTransforms(); };
+            img.src = URL.createObjectURL(e.target.files[0]);
+        }));
     </script>
 </body>
 </html>
