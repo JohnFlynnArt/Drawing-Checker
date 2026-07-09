@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Art Studio - v0.5.2</title>
+    <title>Mobile Art Studio - v0.5.3</title>
     <style>
         body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: system-ui, sans-serif; }
         #viewport { flex: 1; position: relative; overflow: hidden; touch-action: none; background: #121214; }
@@ -51,7 +51,10 @@
     </div>
 
     <script>
-        const refImg = document.getElementById('img-reference'), drawingImg = document.getElementById('img-drawing');
+        const refImg = document.getElementById('img-reference'), 
+              drawingImg = document.getElementById('img-drawing'),
+              opacitySlider = document.getElementById('opacity-slider');
+        
         let activeTarget = 'draw', activeMode = 'sight';
         let layers = { 
             ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, el: refImg }, 
@@ -62,16 +65,14 @@
             activeMode = mode;
             document.getElementById('mode-sight').classList.toggle('active', mode === 'sight');
             document.getElementById('mode-2point').classList.toggle('active', mode === '2point');
-            console.log("Mode switched to:", mode);
         }
 
         function switchTarget(target) {
             activeTarget = target;
             document.getElementById('target-ref-btn').classList.toggle('active', target === 'ref');
             document.getElementById('target-draw-btn').classList.toggle('active', target === 'draw');
-            // Sync slider to current target's opacity
-            document.getElementById('opacity-slider').value = layers[target].opacity;
-            console.log("Target switched to:", target);
+            // FIX: Force slider to sync with the selected layer's current state
+            opacitySlider.value = layers[target].opacity;
         }
 
         function updateTransforms() {
@@ -103,7 +104,7 @@
 
         viewport.addEventListener('touchend', () => { initialDist = 0; window.lastX = null; });
 
-        document.getElementById('opacity-slider').addEventListener('input', (e) => {
+        opacitySlider.addEventListener('input', (e) => {
             layers[activeTarget].opacity = parseFloat(e.target.value);
             updateTransforms();
         });
