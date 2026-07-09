@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mobile Art Studio - v0.5.3</title>
+    <title>Mobile Art Studio - v0.7.0</title>
     <style>
         body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: system-ui, sans-serif; }
         #viewport { flex: 1; position: relative; overflow: hidden; touch-action: none; background: #121214; }
         .pan-wrapper { position: absolute; width: 100%; height: 100%; top:0; left:0; pointer-events: none; }
         .layer { max-width: 90%; max-height: 90%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .layer.loaded { display: block; }
-        #control-dock { height: 260px; background: #1a1a1e; border-top: 1px solid #333; display: flex; flex-direction: column; padding: 10px; gap: 8px; }
-        .dock-row { display: flex; gap: 8px; }
-        button { flex: 1; background: #333; color: #fff; border: 1px solid #444; padding: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+        
+        #control-dock { 
+            height: 320px; background: #1a1a1e; border-top: 1px solid #333; 
+            display: grid; grid-template-rows: repeat(5, 1fr); gap: 6px; padding: 10px; 
+        }
+        .dock-row { display: flex; gap: 6px; }
+        button { flex: 1; background: #333; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
         button.active { background: #3b82f6; border-color: #60a5fa; }
         input[type="range"] { flex: 2; accent-color: #3b82f6; }
-        .btn-slot { flex: 1; background: #2a2a2e; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 8px; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -29,37 +32,35 @@
     
     <div id="control-dock">
         <div class="dock-row">
-            <button class="btn-slot" onclick="document.getElementById('upload-ref').click()">Load Ref</button>
-            <input type="file" id="upload-ref" accept="image/*" style="display:none;">
-            <button class="btn-slot" onclick="document.getElementById('upload-draw').click()">Load Draw</button>
-            <input type="file" id="upload-draw" accept="image/*" style="display:none;">
+            <button onclick="document.getElementById('upload-ref').click()">Load Ref</button>
+            <input type="file" id="upload-ref" accept="image/*" hidden>
+            <button onclick="document.getElementById('upload-draw').click()">Load Draw</button>
+            <input type="file" id="upload-draw" accept="image/*" hidden>
         </div>
         <div class="dock-row">
             <button id="mode-sight" class="active" onclick="switchMode('sight')">Sight-Size</button>
             <button id="mode-2point" onclick="switchMode('2point')">2-Point Match</button>
         </div>
         <div class="dock-row">
+            <button id="btn-points-ref">Ref Point Sel</button>
+            <button id="btn-points-draw">Draw Point Sel</button>
+        </div>
+        <div class="dock-row">
+            <button id="btn-blink">Blink</button>
+            <button id="btn-outline">Outline</button>
+            <button id="btn-checker">Checkerboard</button>
+        </div>
+        <div class="dock-row">
             <button id="target-ref-btn" onclick="switchTarget('ref')">Ref</button>
             <button id="target-draw-btn" class="active" onclick="switchTarget('draw')">Draw</button>
             <input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5">
         </div>
-        <div class="dock-row">
-            <button id="btn-points">Point Selector</button>
-            <button id="btn-blink">Blink</button>
-            <button id="btn-outline">Outline</button>
-        </div>
     </div>
 
     <script>
-        const refImg = document.getElementById('img-reference'), 
-              drawingImg = document.getElementById('img-drawing'),
-              opacitySlider = document.getElementById('opacity-slider');
-        
+        const refImg = document.getElementById('img-reference'), drawingImg = document.getElementById('img-drawing'), opacitySlider = document.getElementById('opacity-slider');
         let activeTarget = 'draw', activeMode = 'sight';
-        let layers = { 
-            ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, el: refImg }, 
-            draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, el: drawingImg } 
-        };
+        let layers = { ref: { x: 0, y: 0, scale: 1, rot: 0, opacity: 1.0, el: refImg }, draw: { x: 0, y: 0, scale: 1, rot: 0, opacity: 0.5, el: drawingImg } };
 
         function switchMode(mode) {
             activeMode = mode;
@@ -71,7 +72,6 @@
             activeTarget = target;
             document.getElementById('target-ref-btn').classList.toggle('active', target === 'ref');
             document.getElementById('target-draw-btn').classList.toggle('active', target === 'draw');
-            // FIX: Force slider to sync with the selected layer's current state
             opacitySlider.value = layers[target].opacity;
         }
 
@@ -83,7 +83,7 @@
             });
         }
 
-        // Gesture Logic
+        // Gesture Logic (Remains identical to keep movement fluid)
         const viewport = document.getElementById('viewport');
         let isPanning = false, lastX, lastY, initialDist = 0, initialAngle = 0;
         viewport.addEventListener('touchmove', (e) => {
@@ -103,11 +103,7 @@
         }, {passive: false});
 
         viewport.addEventListener('touchend', () => { initialDist = 0; window.lastX = null; });
-
-        opacitySlider.addEventListener('input', (e) => {
-            layers[activeTarget].opacity = parseFloat(e.target.value);
-            updateTransforms();
-        });
+        opacitySlider.addEventListener('input', (e) => { layers[activeTarget].opacity = parseFloat(e.target.value); updateTransforms(); });
 
         ['upload-ref', 'upload-draw'].forEach(id => document.getElementById(id).addEventListener('change', (e) => {
             const img = (id === 'upload-ref') ? refImg : drawingImg;
