@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Drawing Checker Studio v1.2.0 — Sprint 1A Framework Rebuild</title>
+<title>Drawing Checker Studio v1.2.3 — Sprint 1A Workflow State UI</title>
 <style>
 :root{
   --bg:#121214;--panel:#1a1a1e;--card:#222227;--border:#34343d;
@@ -62,7 +62,10 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 .mobile-ui{display:none}
 .mobile-topbar{position:absolute;top:0;left:0;right:0;z-index:20;padding:8px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.78),rgba(0,0,0,0));pointer-events:none}
 .mobile-status{pointer-events:auto;margin:auto;max-width:95%;padding:7px 10px;border-radius:999px;background:rgba(26,26,30,.86);border:1px solid rgba(255,255,255,.1);font-size:11px;text-align:center;backdrop-filter:blur(8px)}
-.mobile-toolbar{position:absolute;left:0;right:0;bottom:0;z-index:25;background:rgba(18,18,20,.94);border-top:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:none;gap:6px;align-items:center}
+.mobile-toolbar{position:absolute;left:0;right:0;bottom:0;z-index:25;background:rgba(18,18,20,.94);border-top:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:none;flex-direction:column;gap:6px}
+.mobile-next{display:none;width:100%;min-height:44px;border-radius:11px;background:var(--blue);border-color:#60a5fa;color:#fff;font-size:13px;font-weight:800}
+.mobile-next.show{display:flex}
+.mobile-toolbar-row{display:flex;gap:6px;align-items:center;width:100%}
 .mobile-tools{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1}
 .mobile-tools::-webkit-scrollbar{display:none}
 .tool{flex:0 0 auto;min-width:54px;height:44px;padding:5px 7px;border-radius:10px;font-size:10px;line-height:1.05;display:flex;flex-direction:column;gap:2px}
@@ -185,7 +188,9 @@ input[type=range]{width:100%;accent-color:var(--blue)}
     <div id="popover-content"></div>
   </div>
 
-  <div class="mobile-ui mobile-toolbar">
+  <div id="mobile-toolbar" class="mobile-ui mobile-toolbar">
+    <button id="mobile-next-action" class="mobile-next"></button>
+    <div class="mobile-toolbar-row">
     <div class="mobile-tools">
       <button id="m-images" class="tool"><strong>Images</strong><span>load/replace</span></button>
       <button id="m-nav" class="tool active"><strong>View</strong><span>locked</span></button>
@@ -197,6 +202,7 @@ input[type=range]{width:100%;accent-color:var(--blue)}
       <button id="m-adjust" class="tool"><strong>Adjust</strong><span>layer</span></button>
     </div>
     <button id="m-more" class="mobile-more">•••</button>
+    </div>
   </div>
 
   <input id="mobile-ref-input" class="hidden-input" type="file" accept="image/*">
@@ -260,6 +266,7 @@ function beginNewMobileSession(){
 }
 function loadFile(kind,file){
   if(!file)return;
+  closePopover();
   if(kind==="ref"){
     revoke(refImg);revoke(drawImg);
     refImg.classList.remove("loaded");drawImg.classList.remove("loaded");
@@ -276,8 +283,12 @@ function loadFile(kind,file){
   const url=URL.createObjectURL(file);
   img.onload=()=>{
     img.classList.add("loaded");
-    if(state.alignment==="sight"&&hasRef()&&hasDraw()) autoSight();
-    render();
+
+    if(state.alignment==="sight"&&hasRef()&&hasDraw()){
+      autoSight();
+    }else{
+      render();
+    }
   };
   img.onerror=()=>{
     URL.revokeObjectURL(url);
@@ -287,17 +298,29 @@ function loadFile(kind,file){
 }
 function autoSight(){
   if(!hasRef()||!hasDraw())return;
+
   const rr=refImg.naturalWidth/refImg.naturalHeight;
   const dr=drawImg.naturalWidth/drawImg.naturalHeight;
   state.aspectMismatch=Math.abs(rr-dr)>.01;
-  resetLayer("ref");resetLayer("draw");
+  resetLayer("ref");
+  resetLayer("draw");
+  state.phase="workspace";
+
+  // Dismiss setup UI as soon as both images are confirmed loaded.
+  render();
 
   requestAnimationFrame(()=>{
-    const rw=refImg.getBoundingClientRect().width,rh=refImg.getBoundingClientRect().height;
-    const dw=drawImg.getBoundingClientRect().width,dh=drawImg.getBoundingClientRect().height;
-    if(!rw||!rh||!dw||!dh){setTimeout(autoSight,30);return}
-    state.layers.draw.scale=rr>=dr?rh/dh:rw/dw;
-    state.phase="workspace";
+    const rw=refImg.getBoundingClientRect().width;
+    const rh=refImg.getBoundingClientRect().height;
+    const dw=drawImg.getBoundingClientRect().width;
+    const dh=drawImg.getBoundingClientRect().height;
+
+    if(!rw||!rh||!dw||!dh){
+      setTimeout(autoSight,30);
+      return;
+    }
+
+    state.layers.draw.scale=rr>=dr ? rh/dh : rw/dw;
     render();
   });
 }
@@ -450,39 +473,109 @@ function renderDesktopSlots(){
 }
 function renderStart(){
   const start=$("#mobile-start");
+  const toolbar=$("#mobile-toolbar");
   const title=$("#start-title");
   const copy=$("#start-copy");
   const action=$("#start-action");
   const strategyActions=$("#start-strategy-actions");
 
+  let setupVisible=true;
+
   if(!state.mobileStrategyChosen){
-    start.classList.add("show");
     title.textContent="Choose Alignment";
     copy.textContent="Select the alignment tool you want to use first.";
     strategyActions.style.display="grid";
     action.style.display="none";
-    return;
-  }
-
-  strategyActions.style.display="none";
-  action.style.display="block";
-
-  if(!hasRef()){
-    start.classList.add("show");
+  }else if(!hasRef()){
     title.textContent=state.alignment==="sight" ? "Sight-Size Selected" : "2-Point Selected";
     copy.textContent="Now choose the reference image that anchors this comparison.";
+    strategyActions.style.display="none";
+    action.style.display="block";
     action.textContent="Choose Reference";
     action.onclick=()=>$("#mobile-ref-input").click();
   }else if(!hasDraw()){
-    start.classList.add("show");
     title.textContent="Add Current Drawing";
     copy.textContent="Choose the current drawing photo. You can replace it repeatedly during the session.";
+    strategyActions.style.display="none";
+    action.style.display="block";
     action.textContent="Choose Drawing";
     action.onclick=()=>$("#mobile-draw-library").click();
   }else{
-    start.classList.remove("show");
+    setupVisible=false;
+  }
+
+  start.classList.toggle("show",setupVisible);
+  start.setAttribute("aria-hidden",setupVisible ? "false" : "true");
+
+  if(toolbar){
+    toolbar.style.display=setupVisible ? "none" : "";
+  }
+
+  if(setupVisible){
+    closePopover();
   }
 }
+
+function renderMobileWorkflow(){
+  const next=$("#mobile-next-action");
+  if(!next)return;
+
+  next.classList.remove("show");
+  next.disabled=false;
+  next.onclick=null;
+
+  // Keep alignment tools available, but let the current state drive the main action.
+  $("#m-sight").style.display=hasRef()&&hasDraw() ? "" : "none";
+  $("#m-two").style.display=hasRef()&&hasDraw() ? "" : "none";
+  $("#m-overlay").style.display=hasRef()&&hasDraw() ? "" : "none";
+  $("#m-blink").style.display=hasRef()&&hasDraw() ? "" : "none";
+  $("#m-outline").style.display=hasRef()&&hasDraw() ? "" : "none";
+  $("#m-adjust").style.display=hasRef()&&hasDraw() ? "" : "none";
+  $("#m-nav").style.display=hasRef()&&hasDraw() ? "" : "none";
+
+  if(!hasRef()||!hasDraw())return;
+
+  if(state.alignment==="sight"){
+    next.textContent="Adjust Drawing";
+    next.classList.add("show");
+    next.onclick=()=>{
+      setTarget("draw");
+      state.phase="adjust";
+      render();
+    };
+    return;
+  }
+
+  if(state.points.ref.length<2){
+    next.textContent=`Set Reference Points (${state.points.ref.length}/2)`;
+    next.classList.add("show");
+    next.onclick=()=>setPhase("point-ref");
+    return;
+  }
+
+  if(state.points.draw.length<2){
+    next.textContent=`Set Drawing Points (${state.points.draw.length}/2)`;
+    next.classList.add("show");
+    next.onclick=()=>setPhase("point-draw");
+    return;
+  }
+
+  if(!state.aligned){
+    next.textContent="Compute Alignment";
+    next.classList.add("show");
+    next.onclick=computeTwoPoint;
+    return;
+  }
+
+  next.textContent="Adjust Drawing";
+  next.classList.add("show");
+  next.onclick=()=>{
+    setTarget("draw");
+    state.phase="adjust";
+    render();
+  };
+}
+
 function render(){
   renderVisuals();
   $("#desktop-status").textContent=statusText();
@@ -513,6 +606,7 @@ function render(){
   $("#desktop-opacity-label").textContent=`${state.target==="ref"?"Reference":"Drawing"} Opacity`;
 
   renderStart();
+  renderMobileWorkflow();
   renderDesktopSlots();
 }
 
@@ -582,28 +676,21 @@ $("#start-two").onclick=()=>setAlignment("two");
 $("#m-sight").onclick=()=>setAlignment("sight");
 $("#m-two").onclick=()=>{
   setAlignment("two");
-  if(!hasRef()||!hasDraw()) return;
-  openPopover(`
-    <div class="pop-title">2-Point Alignment</div>
-    <div class="pop-grid two">
-      <button id="p-refpins">Place Ref Pins</button>
-      <button id="p-drawpins">Place Draw Pins</button>
-      <button id="p-compute" disabled>Compute</button>
-      <button id="p-clear">Clear Pins</button>
-    </div>`);
-  $("#p-refpins").onclick=()=>{closePopover();setPhase("point-ref")};
-  $("#p-drawpins").onclick=()=>{closePopover();setPhase("point-draw")};
-  $("#p-clear").onclick=()=>{removeMarkers("all");closePopover();render()};
 };
 
 $("#m-overlay").onclick=()=>setCompare("overlay");
 $("#m-blink").onclick=()=>setCompare("blink");
 $("#m-outline").onclick=()=>setCompare("outline");
-$("#m-nav").onclick=()=>setPhase("workspace");
+$("#m-nav").onclick=()=>{
+  state.phase="workspace";
+  closePopover();
+  render();
+};
 
 $("#m-adjust").onclick=()=>{
   if(!hasRef()||!hasDraw())return;
   state.phase="adjust";
+  render();
   openPopover(`
     <div class="pop-title">Adjust Layer</div>
     <div class="pop-grid two">
