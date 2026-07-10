@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Drawing Checker Studio v1.3.0 — Sprint 1B Workspace Activation Fix</title>
+<title>Drawing Checker Studio v1.3.1 — Sprint 1B Seamless Alignment Switching</title>
 <style>
 :root{
   --bg:#121214;--panel:#1a1a1e;--card:#222227;--border:#34343d;
@@ -373,14 +373,28 @@ function autoSight(){
   });
 }
 function setAlignment(type){
+  if(state.alignment===type){
+    if(type==="sight"&&hasRef()&&hasDraw()) autoSight();
+    else render();
+    return;
+  }
+
   state.alignment=type;
   if(isMobileLayout()) state.mobileStrategyChosen=true;
+
   state.aligned=false;
+  state.markersHidden=false;
   removeMarkers("all");
-  resetLayer("ref");resetLayer("draw");
+  resetLayer("ref");
+  resetLayer("draw");
   state.phase="workspace";
-  if(type==="sight"&&hasRef()&&hasDraw()) autoSight();
-  render();
+  state.returnPhase="workspace";
+
+  if(type==="sight"&&hasRef()&&hasDraw()){
+    autoSight();
+  }else{
+    render();
+  }
 }
 function setCompare(mode){
   state.compare=mode;
@@ -417,7 +431,15 @@ function toggleViewLock(forceUnlocked=null){
 
 function setPhase(phase){
   state.phase=phase;
-  if(phase!=="adjust") state.returnPhase=phase;
+
+  if(phase==="point-ref"||phase==="point-draw"){
+    state.markersHidden=false;
+  }
+
+  if(phase!=="adjust"){
+    state.returnPhase=phase;
+  }
+
   render();
 }
 function worldPoint(clientX,clientY){
@@ -439,11 +461,11 @@ function placePoint(clientX,clientY){
   if(state.alignment!=="two")return;
   const pt=worldPoint(clientX,clientY);
   if(state.phase==="point-ref"&&state.points.ref.length<2){
-    state.points.ref.push(pt);addMarker(pt,"ref",state.points.ref.length);
-    if(state.points.ref.length===2)state.phase="point-draw";
+    state.points.ref.push(pt);
+    addMarker(pt,"ref",state.points.ref.length);
   }else if(state.phase==="point-draw"&&state.points.draw.length<2){
-    state.points.draw.push(pt);addMarker(pt,"draw",state.points.draw.length);
-    if(state.points.draw.length===2)state.phase="workspace";
+    state.points.draw.push(pt);
+    addMarker(pt,"draw",state.points.draw.length);
   }
   render();
 }
@@ -702,8 +724,8 @@ $("#desktop-sight").onclick=()=>setAlignment("sight");
 $("#desktop-two").onclick=()=>setAlignment("two");
 $("#desktop-ref-pins").onclick=()=>setPhase(state.phase==="point-ref"?"workspace":"point-ref");
 $("#desktop-draw-pins").onclick=()=>setPhase(state.phase==="point-draw"?"workspace":"point-draw");
-$("#desktop-clear-ref").onclick=()=>{removeMarkers("ref");render()};
-$("#desktop-clear-draw").onclick=()=>{removeMarkers("draw");render()};
+$("#desktop-clear-ref").onclick=()=>{state.markersHidden=false;removeMarkers("ref");render()};
+$("#desktop-clear-draw").onclick=()=>{state.markersHidden=false;removeMarkers("draw");render()};
 $("#desktop-compute").onclick=computeTwoPoint;
 $("#desktop-overlay").onclick=()=>setCompare("overlay");
 $("#desktop-blink").onclick=()=>setCompare("blink");
@@ -761,9 +783,7 @@ $("#start-sight").onclick=()=>setAlignment("sight");
 $("#start-two").onclick=()=>setAlignment("two");
 
 $("#m-sight").onclick=()=>setAlignment("sight");
-$("#m-two").onclick=()=>{
-  setAlignment("two");
-};
+$("#m-two").onclick=()=>setAlignment("two");
 
 $("#m-overlay").onclick=()=>setCompare("overlay");
 $("#m-blink").onclick=()=>setCompare("blink");
