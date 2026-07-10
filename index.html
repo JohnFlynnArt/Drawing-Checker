@@ -3,35 +3,735 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Drawing Checker Studio - v1.1.0</title>
+<title>Drawing Checker Studio v1.2.0 — Sprint 1A Framework Rebuild</title>
 <style>
-/*
-Drawing Checker Studio
-Version: 1.1.0 - Sprint 1 Mobile Foundation
-Date: 2026-07-09
+:root{
+  --bg:#121214;--panel:#1a1a1e;--card:#222227;--border:#34343d;
+  --text:#f4f4f6;--muted:#9ba1a6;--blue:#3b82f6;--red:#ef4444;
+  --green:#10b981;--amber:#f59e0b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+button,input{font:inherit}
+button{touch-action:manipulation}
+#app{width:100vw;height:100vh;display:flex;overflow:hidden;background:var(--bg)}
 
-Sprint 1 Goals:
-- Preserve desktop workflow.
-- Add mobile-first workflow shell.
-- Treat reference as session anchor.
-- Treat drawing as replaceable working image.
-- Add mobile camera/photo workflow.
-- Keep one shared alignment engine.
-*/
-html,body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;background:#121214}
-#image-overlay-rig-root{--bg-main:#121214;--bg-sidebar:#1a1a1e;--bg-card:#222227;--border-color:#2f2f37;--text-main:#f1f1f4;--text-muted:#9ba1a6;--accent-primary:#3b82f6;--accent-success:#10b981;--accent-danger:#ef4444;--accent-warning:#f59e0b;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg-main);color:var(--text-main);display:flex;width:100vw;height:100vh;overflow:hidden;position:relative;box-sizing:border-box}
-#image-overlay-rig-root *{box-sizing:border-box}.sidebar{width:320px;background:var(--bg-sidebar);border-right:1px solid var(--border-color);display:flex;flex-direction:column;z-index:10;height:100%;flex-shrink:0}.sidebar-header{padding:16px;border-bottom:1px solid var(--border-color)}.sidebar-header h1{font-size:14px;margin:0;font-weight:600;line-height:1.3}.sidebar-scrollable-content{padding:16px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:14px}.sidebar-static-bottom{padding:16px;background:#17171b;border-top:1px solid var(--border-color);display:flex;flex-direction:column;gap:12px}.step-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px}.step-card.disabled-card{opacity:.4;pointer-events:none!important}.step-header-row{display:flex;justify-content:space-between;align-items:center}.step-title{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:700}.clear-pins-link{font-size:10px;color:var(--accent-danger);cursor:pointer;background:transparent;border:none;font-weight:600}.upload-zone{background:rgba(0,0,0,.15);border:1px dashed var(--border-color);border-radius:6px;padding:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}.upload-zone input[type=file]{font-size:11px;color:var(--text-muted);width:100%}.btn-group{display:grid;grid-template-columns:1fr 1fr;gap:8px}.audit-btn-group{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}button{background:#2d2d34;color:var(--text-main);border:1px solid var(--border-color);padding:8px 10px;border-radius:6px;cursor:pointer;font-weight:500;font-size:12px;display:inline-flex;align-items:center;justify-content:center;user-select:none;touch-action:manipulation}button:disabled{opacity:.35;cursor:not-allowed}.engine-btn{background:#232329;border:1px solid var(--border-color);color:var(--text-muted)}.engine-btn.active{background:#3b82f6!important;border-color:#60a5fa!important;color:#fff!important;font-weight:600}.mode-btn.ref-style.active,.mobile-ref.active{background:var(--accent-danger);color:#fff}.mode-btn.draw-style.active,.mobile-draw.active{background:var(--accent-primary);color:#fff}.audit-select-btn.active{background:var(--accent-warning);color:#000;font-weight:600;border-color:#fbbf24}.layer-selector button.active{background:#3a3a43;border-color:var(--accent-primary)}.btn-primary{background:var(--accent-primary);border-color:transparent;font-weight:600;color:#fff}.btn-success{background:var(--accent-success);border-color:transparent;font-weight:600;color:#fff}.btn-danger{background:transparent;border-color:var(--accent-danger);color:var(--accent-danger)}.slider-wrapper{display:flex;flex-direction:column;gap:6px}.slider-header{display:flex;justify-content:space-between;font-size:12px}input[type=range]{width:100%;accent-color:var(--accent-primary)}.checkbox-wrapper{display:flex;align-items:center;gap:8px;font-size:12px}.main-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;position:relative;height:100%}.viewport{position:relative;background:#09090b;border:2px solid var(--border-color);overflow:hidden;width:100%;height:100%;border-radius:8px;cursor:grab;box-shadow:0 10px 30px rgba(0,0,0,.5);touch-action:none}.viewport.marking-ref,.viewport.marking-ref *{border-color:var(--accent-danger)!important;cursor:crosshair!important}.viewport.marking-draw,.viewport.marking-draw *{border-color:var(--accent-primary)!important;cursor:crosshair!important}.pan-wrapper{position:absolute;width:100%;height:100%;transform-origin:center center;pointer-events:none;top:0;left:0}.layer{max-width:90%;max-height:90%;pointer-events:none;display:none;transform-origin:center center;position:absolute;top:50%;left:50%;user-select:none;-webkit-user-drag:none}.layer.loaded{display:block}.viewport.audit-outline .apply-difference{mix-blend-mode:difference;filter:contrast(2) brightness(1.2)}.marker{position:absolute;width:12px;height:12px;border-radius:50%;border:1px solid #fff;transform:translate(-50%,-50%);z-index:100;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:#fff;box-shadow:0 0 4px rgba(0,0,0,.6)}.marker.ref{background:var(--accent-danger)}.marker.draw{background:var(--accent-primary)}.pan-wrapper.hide-markers .marker{display:none!important}.pan-wrapper.hide-draw-only .marker.draw{display:none!important}.pan-wrapper.hide-ref-only .marker.ref{display:none!important}.instructions-footer{margin-top:12px;color:var(--text-muted);font-size:11px;text-align:center}kbd{background:#222227;padding:2px 4px;border-radius:4px;font-family:monospace;color:#fff}.mobile-ui{display:none}.mobile-topbar{position:absolute;top:0;left:0;right:0;z-index:20;display:none;padding:10px 12px;background:linear-gradient(to bottom,rgba(0,0,0,.78),rgba(0,0,0,.15));pointer-events:none}.mobile-status{pointer-events:auto;width:100%;background:rgba(26,26,30,.86);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:8px 10px;font-size:12px;line-height:1.25;text-align:center;color:var(--text-main);backdrop-filter:blur(8px)}.mobile-bottom-sheet{position:absolute;left:0;right:0;bottom:0;z-index:20;display:none;background:rgba(26,26,30,.94);border-top:1px solid rgba(255,255,255,.1);border-radius:18px 18px 0 0;padding:10px 12px 12px;box-shadow:0 -12px 30px rgba(0,0,0,.45);backdrop-filter:blur(10px)}.mobile-sheet-handle{width:44px;height:4px;border-radius:99px;background:rgba(255,255,255,.25);margin:0 auto 8px}.mobile-section{display:none;flex-direction:column;gap:8px}.mobile-section.active{display:flex}.mobile-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mobile-row.three{grid-template-columns:repeat(3,1fr)}.mobile-row.four{grid-template-columns:repeat(4,1fr)}.mobile-primary{min-height:46px;font-size:14px;border-radius:12px;background:var(--accent-primary);color:#fff;border-color:transparent;font-weight:700}.mobile-secondary{min-height:44px;font-size:13px;border-radius:12px;background:#2b2b32}.mobile-danger{color:#ffb4b4;border-color:rgba(239,68,68,.55);background:rgba(239,68,68,.08)}.mobile-pill{font-size:11px;color:var(--text-muted);text-align:center;margin-top:2px}.mobile-mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);font-weight:800;margin-top:2px}.mobile-nudge-pad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;align-items:center}.mobile-nudge-pad button{min-height:42px;font-size:16px;border-radius:12px}.mobile-spacer{visibility:hidden}.mobile-file-input{display:none}
-@media(max-width:768px){html,body{height:100%;overflow:hidden;background:#050506}#image-overlay-rig-root{height:100dvh;min-height:100vh;overflow:hidden;display:block;background:#050506}.sidebar{display:none}.main-content{position:absolute;inset:0;padding:0;height:100%}.viewport{width:100%;height:100%;border:none;border-radius:0;box-shadow:none;background:radial-gradient(circle at center,rgba(255,255,255,.03),rgba(0,0,0,.35)),#09090b}.layer{max-width:94%;max-height:82%}.marker{width:20px;height:20px;font-size:11px;border-width:2px}.instructions-footer{display:none}.mobile-topbar,.mobile-bottom-sheet{display:block}.mobile-ui{display:block}}
+/* DESKTOP */
+.desktop-sidebar{width:320px;height:100%;display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--border);flex:0 0 auto}
+.desktop-header{padding:16px;border-bottom:1px solid var(--border)}
+.desktop-header h1{font-size:14px;margin:0;font-weight:700}
+.desktop-scroll{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.desktop-bottom{padding:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px;background:#17171b}
+.card{padding:12px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
+.card-title{font-size:10px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+button{border:1px solid var(--border);background:#2d2d34;color:var(--text);border-radius:7px;padding:9px 10px;font-size:12px;font-weight:600;cursor:pointer}
+button.active{background:var(--blue);border-color:#60a5fa;color:#fff}
+button:disabled{opacity:.35;cursor:not-allowed}
+.btn-danger{background:transparent;color:var(--red);border-color:var(--red)}
+.btn-primary{background:var(--blue);border-color:transparent;color:white}
+.mode-ref.active{background:var(--red)}
+.mode-draw.active{background:var(--blue)}
+.audit.active{background:var(--amber);border-color:#fbbf24;color:#111}
+.upload-box{border:1px dashed var(--border);background:rgba(0,0,0,.15);border-radius:7px;padding:8px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.upload-box input{width:100%;font-size:11px;color:var(--muted)}
+.small-label{font-size:11px;color:var(--muted)}
+.slider-wrap{display:flex;flex-direction:column;gap:6px}
+.slider-head{display:flex;justify-content:space-between;font-size:12px}
+input[type=range]{width:100%;accent-color:var(--blue)}
+
+/* VIEWPORT */
+.main{flex:1;min-width:0;position:relative;padding:16px;display:flex;flex-direction:column}
+.viewport{position:relative;flex:1;overflow:hidden;border:2px solid var(--border);border-radius:9px;background:#09090b;box-shadow:0 10px 30px rgba(0,0,0,.5);cursor:grab;touch-action:none}
+.viewport.mark-ref{border-color:var(--red);cursor:crosshair}
+.viewport.mark-draw{border-color:var(--blue);cursor:crosshair}
+.viewport.audit-outline .difference{mix-blend-mode:difference;filter:contrast(2) brightness(1.2)}
+.world{position:absolute;inset:0;transform-origin:center center;pointer-events:none}
+.layer{display:none;position:absolute;top:50%;left:50%;max-width:90%;max-height:90%;transform-origin:center center;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.layer.loaded{display:block}
+.marker{position:absolute;width:14px;height:14px;border-radius:50%;border:1px solid white;transform:translate(-50%,-50%);z-index:100;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:white;box-shadow:0 0 5px rgba(0,0,0,.7)}
+.marker.ref{background:var(--red)}
+.marker.draw{background:var(--blue)}
+.world.hide-markers .marker{display:none!important}
+.world.hide-ref .marker.ref{display:none!important}
+.world.hide-draw .marker.draw{display:none!important}
+.desktop-help{margin-top:10px;color:var(--muted);font-size:11px;text-align:center}
+
+/* MOBILE */
+.mobile-ui{display:none}
+.mobile-topbar{position:absolute;top:0;left:0;right:0;z-index:20;padding:8px 10px;background:linear-gradient(to bottom,rgba(0,0,0,.78),rgba(0,0,0,0));pointer-events:none}
+.mobile-status{pointer-events:auto;margin:auto;max-width:95%;padding:7px 10px;border-radius:999px;background:rgba(26,26,30,.86);border:1px solid rgba(255,255,255,.1);font-size:11px;text-align:center;backdrop-filter:blur(8px)}
+.mobile-toolbar{position:absolute;left:0;right:0;bottom:0;z-index:25;background:rgba(18,18,20,.94);border-top:1px solid rgba(255,255,255,.1);backdrop-filter:blur(10px);padding:7px 8px calc(7px + env(safe-area-inset-bottom));display:none;gap:6px;align-items:center}
+.mobile-tools{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1}
+.mobile-tools::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto;min-width:54px;height:44px;padding:5px 7px;border-radius:10px;font-size:10px;line-height:1.05;display:flex;flex-direction:column;gap:2px}
+.tool strong{font-size:12px}
+.tool.active{background:var(--blue);border-color:#60a5fa}
+.tool.audit.active{background:var(--amber);color:#111;border-color:#fbbf24}
+.mobile-more{flex:0 0 44px;height:44px;border-radius:10px}
+.mobile-popover{display:none;position:absolute;left:8px;right:8px;bottom:calc(58px + env(safe-area-inset-bottom));z-index:30;background:rgba(26,26,30,.98);border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:0 -10px 28px rgba(0,0,0,.45)}
+.mobile-popover.open{display:block}
+.pop-title{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:800;margin-bottom:8px}
+.pop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.pop-grid.two{grid-template-columns:1fr 1fr}
+.pop-grid button{min-height:42px;border-radius:10px;font-size:12px}
+.mobile-opacity{display:flex;align-items:center;gap:8px;margin-top:8px}
+.mobile-opacity span{font-size:11px;color:var(--muted);white-space:nowrap}
+.mobile-start{position:absolute;inset:0;z-index:15;display:none;align-items:center;justify-content:center;padding:22px;pointer-events:none}
+.mobile-start-card{pointer-events:auto;width:min(360px,92vw);padding:20px;border-radius:18px;background:rgba(26,26,30,.93);border:1px solid rgba(255,255,255,.12);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.mobile-start-card h2{font-size:18px;margin:0 0 8px}
+.mobile-start-card p{font-size:12px;color:var(--muted);margin:0 0 14px}
+.mobile-start-card button{width:100%;min-height:48px;border-radius:12px;font-size:14px;background:var(--blue);border-color:transparent}
+.hidden-input{display:none!important}
+
+@media(max-width:768px){
+  .desktop-sidebar,.desktop-help{display:none}
+  #app{display:block;height:100dvh;min-height:100vh}
+  .main{position:absolute;inset:0;padding:0}
+  .viewport{border:0;border-radius:0;box-shadow:none;width:100%;height:100%}
+  .layer{max-width:96%;max-height:88%}
+  .marker{width:22px;height:22px;font-size:11px;border-width:2px}
+  .mobile-ui{display:block}
+  .mobile-toolbar{display:flex}
+  .mobile-start.show{display:flex}
+}
 </style>
 </head>
 <body>
-<div id="image-overlay-rig-root">
-<div class="sidebar"><div class="sidebar-header"><h1 id="status-display">Import Images</h1></div><div class="sidebar-scrollable-content"><div class="step-card" id="strategy-card"><div class="step-header-row"><span class="step-title">Choose Alignment Strategy</span></div><div class="btn-group"><button id="engine-sightsize" class="engine-btn active">Sight-Size Match</button><button id="engine-proportional" class="engine-btn">2-Point Match</button></div></div><div class="step-card" id="source-files-card"><div class="step-header-row"><span class="step-title">1. Source Files</span></div><div style="font-size:11px;margin-bottom:2px;color:var(--text-muted)">Reference Image</div><div class="upload-zone" id="slot-ref"><input type="file" id="upload-ref" accept="image/*"></div><div style="font-size:11px;margin-top:8px;margin-bottom:2px;color:var(--text-muted)">Drawing Image</div><div class="upload-zone" id="slot-draw"><input type="file" id="upload-draw" accept="image/*"></div><input class="mobile-file-input" type="file" id="upload-draw-camera" accept="image/*" capture="environment"></div><div class="step-card" id="pins-config-panel" style="display:none"><div class="step-header-row"><span class="step-title">2. Match Pins</span><div><button id="clear-ref-link" class="clear-pins-link" style="margin-right:8px;display:none">Clear Ref</button><button id="clear-draw-link" class="clear-pins-link" style="display:none">Clear Draw</button></div></div><div class="btn-group"><button id="btn-mode-ref" class="mode-btn ref-style" disabled>Set Ref (0/2)</button><button id="btn-mode-draw" class="mode-btn draw-style" disabled>Set Draw (0/2)</button></div></div><div class="step-card" id="execution-card"><div class="step-header-row"><span class="step-title">3. Execution</span></div><button id="btn-align" class="btn-primary" disabled>Compute Alignment</button><div class="checkbox-wrapper"><input type="checkbox" id="chk-markers" checked><label for="chk-markers">Show Anchors</label></div></div><div class="step-card"><div class="step-header-row"><span class="step-title">4. Validation Engine</span></div><div class="audit-btn-group"><button id="audit-mode-overlay" class="audit-select-btn active">Overlay</button><button id="audit-mode-blink" class="audit-select-btn">Blink</button><button id="audit-mode-outline" class="audit-select-btn">Outline</button></div></div></div><div class="sidebar-static-bottom"><div class="btn-group layer-selector"><button id="target-ref-btn">Target Ref</button><button id="target-draw-btn" class="active">Target Draw</button></div><div class="slider-wrapper"><div class="slider-header"><span id="opacity-label">Drawing Opacity</span></div><input type="range" id="opacity-slider" min="0" max="1" step="0.01" value="0.5"></div><button id="btn-reset-view" class="btn-danger">Reset All</button></div></div>
-<div class="main-content"><div class="viewport" id="viewport"><div class="pan-wrapper" id="pan-wrapper"><img id="img-reference" class="layer" alt="Reference"><img id="img-drawing" class="layer" alt="Drawing"></div></div><div class="instructions-footer"><strong>Manual Precision Control:</strong> Shifts are scaled to <kbd>0.5px</kbd> steps via <kbd>Arrow Keys</kbd>.<br>Hold <kbd>Shift</kbd> + Arrows to adjust scale/rotation smoothly. Right-click workspace to wipe active target points.</div></div>
-<div class="mobile-topbar mobile-ui"><div class="mobile-status" id="mobile-status">Load a reference to begin.</div></div><div class="mobile-bottom-sheet mobile-ui"><div class="mobile-sheet-handle"></div><div class="mobile-section" id="mobile-section-start"><button class="mobile-primary" id="mobile-load-ref">Load Reference</button><div class="mobile-pill">The reference starts the comparison session.</div></div><div class="mobile-section" id="mobile-section-drawing"><div class="mobile-mini-label">Current Drawing</div><div class="mobile-row"><button class="mobile-primary" id="mobile-camera-draw">Take Photo</button><button class="mobile-secondary" id="mobile-choose-draw">Choose Photo</button></div><button class="mobile-secondary mobile-danger" id="mobile-change-ref">Change Reference</button></div><div class="mobile-section" id="mobile-section-work"><div class="mobile-mini-label">Alignment</div><div class="mobile-row"><button class="mobile-secondary engine-btn active" id="mobile-sight">Sight-Size</button><button class="mobile-secondary engine-btn" id="mobile-two-point">2-Point</button></div><div id="mobile-point-controls"><div class="mobile-row"><button class="mobile-secondary mobile-ref" id="mobile-set-ref">Ref Pins 0/2</button><button class="mobile-secondary mobile-draw" id="mobile-set-draw">Draw Pins 0/2</button></div><button class="mobile-primary" id="mobile-compute-align" disabled>Compute Alignment</button></div><div class="mobile-mini-label">Compare</div><div class="mobile-row three"><button class="mobile-secondary audit-select-btn active" id="mobile-overlay">Overlay</button><button class="mobile-secondary audit-select-btn" id="mobile-blink">Blink</button><button class="mobile-secondary audit-select-btn" id="mobile-outline">Outline</button></div><div class="mobile-mini-label">Fine Adjust</div><div class="mobile-row"><button class="mobile-secondary" id="mobile-target-ref">Adjust Ref</button><button class="mobile-secondary active" id="mobile-target-draw">Adjust Draw</button></div><div class="slider-wrapper"><div class="slider-header"><span id="mobile-opacity-label">Drawing Opacity</span></div><input type="range" id="mobile-opacity-slider" min="0" max="1" step="0.01" value="0.5"></div><div class="mobile-nudge-pad"><button class="mobile-spacer">·</button><button data-nudge="up">↑</button><button class="mobile-spacer">·</button><button data-nudge="left">←</button><button data-nudge="down">↓</button><button data-nudge="right">→</button></div><div class="mobile-row four"><button data-scale="-">Scale −</button><button data-scale="+">Scale +</button><button data-rotate="-">⟲</button><button data-rotate="+">⟳</button></div><div class="mobile-row"><button class="mobile-secondary" id="mobile-hide-markers">Hide Pins</button><button class="mobile-secondary mobile-danger" id="mobile-reset">Reset</button></div><button class="mobile-primary" id="mobile-replace-draw">Replace Drawing</button></div></div>
+<div id="app">
+  <aside class="desktop-sidebar">
+    <div class="desktop-header"><h1 id="desktop-status">Step 1: Import Images</h1></div>
+    <div class="desktop-scroll">
+      <section class="card">
+        <div class="card-title">Alignment Strategy</div>
+        <div class="row2">
+          <button id="desktop-sight" class="active">Sight-Size</button>
+          <button id="desktop-two">2-Point</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">Source Images</div>
+        <div class="small-label">Reference</div>
+        <div class="upload-box" id="desktop-ref-slot"></div>
+        <div class="small-label">Drawing</div>
+        <div class="upload-box" id="desktop-draw-slot"></div>
+      </section>
+
+      <section class="card" id="desktop-pins-card" style="display:none">
+        <div class="card-title">Match Pins</div>
+        <div class="row2">
+          <button id="desktop-ref-pins" class="mode-ref">Set Ref (0/2)</button>
+          <button id="desktop-draw-pins" class="mode-draw">Set Draw (0/2)</button>
+        </div>
+        <div class="row2">
+          <button id="desktop-clear-ref">Clear Ref</button>
+          <button id="desktop-clear-draw">Clear Draw</button>
+        </div>
+        <button id="desktop-compute" class="btn-primary" disabled>Compute Alignment</button>
+      </section>
+
+      <section class="card">
+        <div class="card-title">Compare</div>
+        <div class="row3">
+          <button id="desktop-overlay" class="audit active">Overlay</button>
+          <button id="desktop-blink" class="audit">Blink</button>
+          <button id="desktop-outline" class="audit">Outline</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="desktop-bottom">
+      <div class="row2">
+        <button id="desktop-target-ref">Target Ref</button>
+        <button id="desktop-target-draw" class="active">Target Draw</button>
+      </div>
+      <div class="slider-wrap">
+        <div class="slider-head"><span id="desktop-opacity-label">Drawing Opacity</span></div>
+        <input id="desktop-opacity" type="range" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <button id="desktop-reset" class="btn-danger">Reset View</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="viewport" class="viewport">
+      <div id="world" class="world">
+        <img id="ref-image" class="layer" alt="Reference">
+        <img id="draw-image" class="layer" alt="Drawing">
+      </div>
+    </div>
+    <div class="desktop-help">
+      Mouse wheel zooms the locked workspace. Drag pans. Arrow keys nudge the selected layer; Shift + arrows scale or rotate.
+    </div>
+  </main>
+
+  <div class="mobile-ui mobile-topbar"><div id="mobile-status" class="mobile-status">Load a reference to begin.</div></div>
+
+  <div id="mobile-start" class="mobile-ui mobile-start show">
+    <div class="mobile-start-card">
+      <h2 id="start-title">Load Reference</h2>
+      <p id="start-copy">Choose the image that anchors this drawing session.</p>
+      <button id="start-action">Choose Reference</button>
+    </div>
+  </div>
+
+  <div id="mobile-popover" class="mobile-ui mobile-popover">
+    <div id="popover-content"></div>
+  </div>
+
+  <div class="mobile-ui mobile-toolbar">
+    <div class="mobile-tools">
+      <button id="m-images" class="tool"><strong>Images</strong><span>load/replace</span></button>
+      <button id="m-nav" class="tool active"><strong>View</strong><span>locked</span></button>
+      <button id="m-sight" class="tool active"><strong>Sight</strong><span>align</span></button>
+      <button id="m-two" class="tool"><strong>2-Point</strong><span>align</span></button>
+      <button id="m-overlay" class="tool audit active"><strong>Overlay</strong><span>compare</span></button>
+      <button id="m-blink" class="tool audit"><strong>Blink</strong><span>compare</span></button>
+      <button id="m-outline" class="tool audit"><strong>Outline</strong><span>compare</span></button>
+      <button id="m-adjust" class="tool"><strong>Adjust</strong><span>layer</span></button>
+    </div>
+    <button id="m-more" class="mobile-more">•••</button>
+  </div>
+
+  <input id="mobile-ref-input" class="hidden-input" type="file" accept="image/*">
+  <input id="mobile-draw-library" class="hidden-input" type="file" accept="image/*">
+  <input id="mobile-draw-camera" class="hidden-input" type="file" accept="image/*" capture="environment">
 </div>
+
 <script>
-document.addEventListener("DOMContentLoaded",()=>{const root=document.getElementById('image-overlay-rig-root');if(!root)return;const refImg=root.querySelector('#img-reference'),drawingImg=root.querySelector('#img-drawing'),viewport=root.querySelector('#viewport'),panWrapper=root.querySelector('#pan-wrapper');const btnRef=root.querySelector('#btn-mode-ref'),btnDraw=root.querySelector('#btn-mode-draw'),btnAlign=root.querySelector('#btn-align'),btnResetView=root.querySelector('#btn-reset-view'),opacitySlider=root.querySelector('#opacity-slider'),opacityLabel=root.querySelector('#opacity-label'),chkMarkers=root.querySelector('#chk-markers'),statusDisplay=root.querySelector('#status-display');const slotRef=root.querySelector('#slot-ref'),slotDraw=root.querySelector('#slot-draw'),targetRefBtn=root.querySelector('#target-ref-btn'),targetDrawBtn=root.querySelector('#target-draw-btn'),clearRefLink=root.querySelector('#clear-ref-link'),clearDrawLink=root.querySelector('#clear-draw-link'),pinsPanel=root.querySelector('#pins-config-panel'),strategyCard=root.querySelector('#strategy-card'),sourceFilesCard=root.querySelector('#source-files-card');const auditOverlayBtn=root.querySelector('#audit-mode-overlay'),auditBlinkBtn=root.querySelector('#audit-mode-blink'),auditOutlineBtn=root.querySelector('#audit-mode-outline'),enginePropBtn=root.querySelector('#engine-proportional'),engineSightBtn=root.querySelector('#engine-sightsize');const uploadRef=root.querySelector('#upload-ref'),uploadDraw=root.querySelector('#upload-draw'),uploadDrawCamera=root.querySelector('#upload-draw-camera');const mobileStatus=root.querySelector('#mobile-status');const mobileSections={start:root.querySelector('#mobile-section-start'),drawing:root.querySelector('#mobile-section-drawing'),work:root.querySelector('#mobile-section-work')};const mobileLoadRef=root.querySelector('#mobile-load-ref'),mobileChangeRef=root.querySelector('#mobile-change-ref'),mobileChooseDraw=root.querySelector('#mobile-choose-draw'),mobileCameraDraw=root.querySelector('#mobile-camera-draw'),mobileReplaceDraw=root.querySelector('#mobile-replace-draw'),mobileSight=root.querySelector('#mobile-sight'),mobileTwoPoint=root.querySelector('#mobile-two-point'),mobileSetRef=root.querySelector('#mobile-set-ref'),mobileSetDraw=root.querySelector('#mobile-set-draw'),mobileComputeAlign=root.querySelector('#mobile-compute-align'),mobileOverlay=root.querySelector('#mobile-overlay'),mobileBlink=root.querySelector('#mobile-blink'),mobileOutline=root.querySelector('#mobile-outline'),mobileTargetRef=root.querySelector('#mobile-target-ref'),mobileTargetDraw=root.querySelector('#mobile-target-draw'),mobileOpacitySlider=root.querySelector('#mobile-opacity-slider'),mobileOpacityLabel=root.querySelector('#mobile-opacity-label'),mobileHideMarkers=root.querySelector('#mobile-hide-markers'),mobileReset=root.querySelector('#mobile-reset'),mobilePointControls=root.querySelector('#mobile-point-controls');let zoomScale=1,panX=0,panY=0,currentMode='pan',diagnosticMode='overlay',blinkIntervalId=null,blinkState=true,isDragging=false,startX=0,startY=0,refPoints=[],drawPoints=[],activeTarget='draw',appEngineMode='sightsize',aspectWarningActive=false,isAlignedComputed=false;let layers={ref:{x:0,y:0,scale:1,rot:0,opacity:1,zIndex:1,el:refImg},draw:{x:0,y:0,scale:1,rot:0,opacity:.5,zIndex:2,el:drawingImg}};function hasRef(){return refImg.classList.contains('loaded')}function hasDraw(){return drawingImg.classList.contains('loaded')}function revoke(img){if(img.src&&img.src.startsWith('blob:'))URL.revokeObjectURL(img.src)}function setDesktopSlot(type,loaded){const slot=type==='ref'?slotRef:slotDraw;if(!slot)return;if(loaded){slot.innerHTML=`<span style="font-size:11px;color:var(--accent-success);font-weight:600">✓ ${type.toUpperCase()} Ready</span><button class="btn-danger" style="padding:2px 6px;font-size:10px">X</button>`;slot.querySelector('button').addEventListener('click',()=>{type==='ref'?startNewReferenceSession():clearDrawingOnly()})}else{slot.innerHTML=`<input type="file" id="upload-${type}" accept="image/*">`;slot.querySelector('input').addEventListener('change',e=>{const file=e.target.files[0];if(file)loadImageFile(type,file);e.target.value=''})}}function resetLayerTransforms(which='all'){if(which==='ref'||which==='all'){Object.assign(layers.ref,{x:0,y:0,scale:1,rot:0,opacity:1,zIndex:activeTarget==='ref'?2:1})}if(which==='draw'||which==='all'){Object.assign(layers.draw,{x:0,y:0,scale:1,rot:0,opacity:.5,zIndex:activeTarget==='draw'?2:1})}}function startNewReferenceSession(){revoke(refImg);revoke(drawingImg);refImg.removeAttribute('src');drawingImg.removeAttribute('src');refImg.classList.remove('loaded');drawingImg.classList.remove('loaded');setDesktopSlot('ref',false);setDesktopSlot('draw',false);refPoints=[];drawPoints=[];root.querySelectorAll('.marker').forEach(m=>m.remove());zoomScale=1;panX=0;panY=0;isAlignedComputed=false;aspectWarningActive=false;resetLayerTransforms('all');setMode('pan');setDiagnosticMode('overlay');setManualTarget('draw');updateTransforms()}function clearDrawingOnly(){revoke(drawingImg);drawingImg.removeAttribute('src');drawingImg.classList.remove('loaded');setDesktopSlot('draw',false);drawPoints=[];root.querySelectorAll('.marker.draw').forEach(m=>m.remove());isAlignedComputed=false;resetLayerTransforms('draw');aspectWarningActive=false;setMode('pan');updateTransforms()}function prepareForReplacement(type){if(type==='ref'){if(hasRef()||hasDraw()){revoke(refImg);revoke(drawingImg);refImg.classList.remove('loaded');drawingImg.classList.remove('loaded');drawingImg.removeAttribute('src');setDesktopSlot('draw',false);refPoints=[];drawPoints=[];root.querySelectorAll('.marker').forEach(m=>m.remove());resetLayerTransforms('all');zoomScale=1;panX=0;panY=0;aspectWarningActive=false}}else{revoke(drawingImg);drawPoints=[];root.querySelectorAll('.marker.draw').forEach(m=>m.remove());resetLayerTransforms('draw');aspectWarningActive=false}isAlignedComputed=false;chkMarkers.checked=true;panWrapper.classList.remove('hide-markers');setMode('pan')}function loadImageFile(type,file){if(!file)return;prepareForReplacement(type);const img=type==='ref'?refImg:drawingImg;img.onload=()=>{img.classList.add('loaded');setDesktopSlot(type,true);if(appEngineMode==='sightsize')requestAnimationFrame(()=>requestAnimationFrame(triggerAutomatedSightSize));updateTransforms()};img.src=URL.createObjectURL(file)}function switchEngineMode(mode){if(appEngineMode===mode)return;appEngineMode=mode;isAlignedComputed=false;refPoints=[];drawPoints=[];root.querySelectorAll('.marker').forEach(m=>m.remove());pinsPanel.style.display=mode==='sightsize'?'none':'flex';resetLayerTransforms('all');setMode('pan');setDiagnosticMode('overlay');setManualTarget('draw');if(mode==='sightsize')requestAnimationFrame(()=>requestAnimationFrame(triggerAutomatedSightSize));updateTransforms()}enginePropBtn.addEventListener('click',()=>switchEngineMode('proportional'));engineSightBtn.addEventListener('click',()=>switchEngineMode('sightsize'));targetRefBtn.addEventListener('click',()=>setManualTarget('ref'));targetDrawBtn.addEventListener('click',()=>setManualTarget('draw'));function setManualTarget(target){activeTarget=target;targetRefBtn.classList.toggle('active',target==='ref');targetDrawBtn.classList.toggle('active',target==='draw');mobileTargetRef.classList.toggle('active',target==='ref');mobileTargetDraw.classList.toggle('active',target==='draw');if(target==='ref'){layers.ref.zIndex=2;layers.draw.zIndex=1}else{layers.ref.zIndex=1;layers.draw.zIndex=2}opacitySlider.value=layers[activeTarget].opacity;mobileOpacitySlider.value=layers[activeTarget].opacity;const label=`${target==='ref'?'Reference':'Drawing'} Opacity`;opacityLabel.textContent=label;mobileOpacityLabel.textContent=label;updateTransforms()}opacitySlider.addEventListener('input',e=>{layers[activeTarget].opacity=parseFloat(e.target.value);mobileOpacitySlider.value=e.target.value;updateTransforms()});mobileOpacitySlider.addEventListener('input',e=>{layers[activeTarget].opacity=parseFloat(e.target.value);opacitySlider.value=e.target.value;updateTransforms()});uploadRef.addEventListener('change',e=>{const file=e.target.files[0];if(file)loadImageFile('ref',file);e.target.value=''});uploadDraw.addEventListener('change',e=>{const file=e.target.files[0];if(file)loadImageFile('draw',file);e.target.value=''});uploadDrawCamera.addEventListener('change',e=>{const file=e.target.files[0];if(file)loadImageFile('draw',file);e.target.value=''});chkMarkers.addEventListener('change',e=>{panWrapper.classList.toggle('hide-markers',!e.target.checked);updateTransforms()});function triggerAutomatedSightSize(){if(!hasRef()||!hasDraw()){updateTransforms();return}const refRatio=refImg.naturalWidth/refImg.naturalHeight,drawRatio=drawingImg.naturalWidth/drawingImg.naturalHeight;aspectWarningActive=Math.abs(refRatio-drawRatio)>0.01;Object.assign(layers.ref,{x:0,y:0,scale:1,rot:0});Object.assign(layers.draw,{x:0,y:0,rot:0});const rW=refImg.clientWidth||refImg.getBoundingClientRect().width,rH=refImg.clientHeight||refImg.getBoundingClientRect().height,dW=drawingImg.clientWidth||drawingImg.getBoundingClientRect().width,dH=drawingImg.clientHeight||drawingImg.getBoundingClientRect().height;if(rW===0||rH===0||dW===0||dH===0){setTimeout(triggerAutomatedSightSize,30);return}layers.draw.scale=refRatio>=drawRatio?rH/dH:rW/dW;setMode('pan');setDiagnosticMode('overlay');updateTransforms()}function clearMarkers(type){if(type==='ref'||type==='all'){refPoints=[];root.querySelectorAll('.marker.ref').forEach(m=>m.remove())}if(type==='draw'||type==='all'){drawPoints=[];root.querySelectorAll('.marker.draw').forEach(m=>m.remove())}if(refPoints.length<2||drawPoints.length<2)btnAlign.disabled=true;setMode(type==='ref'?'mark-ref':type==='draw'?'mark-draw':'pan');updateTransforms()}clearRefLink.addEventListener('click',()=>clearMarkers('ref'));clearDrawLink.addEventListener('click',()=>clearMarkers('draw'));viewport.addEventListener('contextmenu',e=>{e.preventDefault();if(currentMode==='mark-ref')clearMarkers('ref');else if(currentMode==='mark-draw')clearMarkers('draw')});btnRef.addEventListener('click',()=>setMode(currentMode==='mark-ref'?'pan':'mark-ref'));btnDraw.addEventListener('click',()=>setMode(currentMode==='mark-draw'?'pan':'mark-draw'));function setMode(mode){currentMode=mode;viewport.className='viewport';if(diagnosticMode==='outline')viewport.classList.add('audit-outline');if(mode==='mark-ref')viewport.classList.add('marking-ref');if(mode==='mark-draw')viewport.classList.add('marking-draw');btnRef.classList.toggle('active',mode==='mark-ref');btnDraw.classList.toggle('active',mode==='mark-draw');mobileSetRef.classList.toggle('active',mode==='mark-ref');mobileSetDraw.classList.toggle('active',mode==='mark-draw');panWrapper.classList.remove('hide-draw-only','hide-ref-only');if(mode==='mark-ref')panWrapper.classList.add('hide-draw-only');else if(mode==='mark-draw')panWrapper.classList.add('hide-ref-only');updateTransforms()}function setDiagnosticMode(mode){diagnosticMode=mode;if(blinkIntervalId){clearInterval(blinkIntervalId);blinkIntervalId=null}viewport.classList.remove('audit-outline');[auditOverlayBtn,mobileOverlay].forEach(b=>b.classList.toggle('active',mode==='overlay'));[auditBlinkBtn,mobileBlink].forEach(b=>b.classList.toggle('active',mode==='blink'));[auditOutlineBtn,mobileOutline].forEach(b=>b.classList.toggle('active',mode==='outline'));if(mode==='blink'){blinkState=true;blinkIntervalId=setInterval(()=>{blinkState=!blinkState;updateTransforms()},330)}else if(mode==='outline')viewport.classList.add('audit-outline');updateTransforms()}auditOverlayBtn.addEventListener('click',()=>setDiagnosticMode('overlay'));auditBlinkBtn.addEventListener('click',()=>setDiagnosticMode('blink'));auditOutlineBtn.addEventListener('click',()=>setDiagnosticMode('outline'));function viewportToWorld(clientX,clientY){const rect=viewport.getBoundingClientRect();return{x:(clientX-(rect.left+rect.width/2)-panX)/zoomScale,y:(clientY-(rect.top+rect.height/2)-panY)/zoomScale}}function handleWorkspacePointerDown(clientX,clientY,buttonType=0){if(buttonType===2)return;if(currentMode!=='pan'){if(appEngineMode!=='proportional')return;const pt=viewportToWorld(clientX,clientY);if(currentMode==='mark-ref'&&refPoints.length<2){refPoints.push(pt);dropVisualMarker(pt.x,pt.y,'ref',refPoints.length);if(refPoints.length===2)setMode('mark-draw')}else if(currentMode==='mark-draw'&&drawPoints.length<2){drawPoints.push(pt);dropVisualMarker(pt.x,pt.y,'draw',drawPoints.length);if(drawPoints.length===2)setMode('pan')}updateTransforms()}else{isDragging=true;startX=clientX-panX;startY=clientY-panY}}viewport.addEventListener('mousedown',e=>handleWorkspacePointerDown(e.clientX,e.clientY,e.button));root.addEventListener('mousemove',e=>{if(!isDragging||currentMode!=='pan')return;panX=e.clientX-startX;panY=e.clientY-startY;updateTransforms()});window.addEventListener('mouseup',()=>isDragging=false);let touchState={active:false,mode:'none',lastX:0,lastY:0,startDistance:0,startZoom:1,startPanX:0,startPanY:0,centerX:0,centerY:0};function dist(t1,t2){return Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY)}function center(t1,t2){return{x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2}}viewport.addEventListener('touchstart',e=>{if(e.touches.length===1){const t=e.touches[0];if(currentMode!=='pan'){handleWorkspacePointerDown(t.clientX,t.clientY,0);return}touchState.active=true;touchState.mode='pan';touchState.lastX=t.clientX;touchState.lastY=t.clientY}else if(e.touches.length===2){const c=center(e.touches[0],e.touches[1]);touchState.active=true;touchState.mode='pinch';touchState.startDistance=dist(e.touches[0],e.touches[1]);touchState.startZoom=zoomScale;touchState.startPanX=panX;touchState.startPanY=panY;touchState.centerX=c.x;touchState.centerY=c.y}},{passive:false});viewport.addEventListener('touchmove',e=>{e.preventDefault();if(!touchState.active)return;if(e.touches.length===1&&touchState.mode==='pan'&&currentMode==='pan'){const t=e.touches[0];panX+=t.clientX-touchState.lastX;panY+=t.clientY-touchState.lastY;touchState.lastX=t.clientX;touchState.lastY=t.clientY;updateTransforms()}else if(e.touches.length===2){const nd=dist(e.touches[0],e.touches[1]),nc=center(e.touches[0],e.touches[1]),sf=nd/Math.max(1,touchState.startDistance),nz=Math.max(.1,Math.min(touchState.startZoom*sf,8)),rect=viewport.getBoundingClientRect(),vcx=rect.left+rect.width/2,vcy=rect.top+rect.height/2,wx=(touchState.centerX-vcx-touchState.startPanX)/touchState.startZoom,wy=(touchState.centerY-vcy-touchState.startPanY)/touchState.startZoom;zoomScale=nz;panX=nc.x-vcx-wx*nz;panY=nc.y-vcy-wy*nz;updateTransforms()}},{passive:false});window.addEventListener('touchend',()=>{touchState.active=false;touchState.mode='none'});function dropVisualMarker(x,y,className,pointIndex){const marker=document.createElement('div');marker.className=`marker ${className}`;marker.style.left=`calc(50% + ${x}px)`;marker.style.top=`calc(50% + ${y}px)`;marker.textContent=pointIndex;panWrapper.appendChild(marker)}function computeAlignment(){if(refPoints.length<2||drawPoints.length<2)return;const R1=refPoints[0],R2=refPoints[1],D1=drawPoints[0],D2=drawPoints[1],distR=Math.hypot(R2.x-R1.x,R2.y-R1.y),distD=Math.hypot(D2.x-D1.x,D2.y-D1.y);if(distD===0)return;Object.assign(layers.ref,{x:0,y:0,scale:1,rot:0});const targetScale=distR/distD,angleR=Math.atan2(R2.y-R1.y,R2.x-R1.x),angleD=Math.atan2(D2.y-D1.y,D2.x-D1.x),rad=angleR-angleD,cos=Math.cos(rad),sin=Math.sin(rad);layers.draw.scale=targetScale;layers.draw.rot=rad*180/Math.PI;layers.draw.x=R1.x-((D1.x*cos-D1.y*sin)*targetScale);layers.draw.y=R1.y-((D1.x*sin+D1.y*cos)*targetScale);isAlignedComputed=true;chkMarkers.checked=false;panWrapper.classList.add('hide-markers');setMode('pan');setDiagnosticMode('overlay');updateTransforms()}btnAlign.addEventListener('click',computeAlignment);mobileComputeAlign.addEventListener('click',computeAlignment);function executeFullCleanReset(){zoomScale=1;panX=0;panY=0;isAlignedComputed=false;aspectWarningActive=false;resetLayerTransforms('all');clearMarkers('all');chkMarkers.checked=true;panWrapper.classList.remove('hide-markers');setMode('pan');setManualTarget('draw');setDiagnosticMode('overlay');if(appEngineMode==='sightsize')requestAnimationFrame(()=>requestAnimationFrame(triggerAutomatedSightSize));updateTransforms()}btnResetView.addEventListener('click',executeFullCleanReset);mobileReset.addEventListener('click',executeFullCleanReset);viewport.addEventListener('wheel',e=>{e.preventDefault();const rect=viewport.getBoundingClientRect(),mouseX=e.clientX-rect.left,mouseY=e.clientY-rect.top,vcx=rect.width/2,vcy=rect.height/2,targetX=(mouseX-vcx-panX)/zoomScale,targetY=(mouseY-vcy-panY)/zoomScale,nextScale=Math.max(.1,Math.min(zoomScale+(e.deltaY<0?.05:-.05),8));panX=mouseX-vcx-targetX*nextScale;panY=mouseY-vcy-targetY*nextScale;zoomScale=nextScale;updateTransforms()},{passive:false});function executeStepAdjustment(direction,useAlt){const active=layers[activeTarget];if(useAlt){if(direction==='up')active.scale+=.005;else if(direction==='down')active.scale=Math.max(.005,active.scale-.005);else if(direction==='left')active.rot-=.25;else if(direction==='right')active.rot+=.25}else{if(direction==='up')active.y-=.5;else if(direction==='down')active.y+=.5;else if(direction==='left')active.x-=.5;else if(direction==='right')active.x+=.5}updateTransforms()}window.addEventListener('keydown',e=>{if(document.activeElement&&['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();const map={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};executeStepAdjustment(map[e.key],e.shiftKey)}});function updateMobileSections(){Object.values(mobileSections).forEach(s=>s.classList.remove('active'));if(!hasRef())mobileSections.start.classList.add('active');else if(!hasDraw())mobileSections.drawing.classList.add('active');else mobileSections.work.classList.add('active')}function updateMobileStatus(){if(!hasRef()){mobileStatus.textContent='Load a reference to begin.';return}if(!hasDraw()){mobileStatus.textContent='Reference loaded. Add the current drawing photo.';return}if(appEngineMode==='sightsize')mobileStatus.textContent=aspectWarningActive?'Sight-Size active. Aspect ratio mismatch detected — micro adjust or try 2-Point.':'Sight-Size active. Use Overlay, Blink, or Outline to observe differences.';else if(refPoints.length<2)mobileStatus.textContent=`2-Point: tap ${2-refPoints.length} reference point${2-refPoints.length===1?'':'s'}.`;else if(drawPoints.length<2)mobileStatus.textContent=`2-Point: tap ${2-drawPoints.length} matching drawing point${2-drawPoints.length===1?'':'s'}.`;else if(!isAlignedComputed)mobileStatus.textContent='2-Point pins ready. Compute alignment, then compare.';else mobileStatus.textContent='Alignment computed. Compare visually and micro adjust if needed.'}function updateTransforms(){panWrapper.style.transform=`translate(${panX}px, ${panY}px) scale(${zoomScale})`;Object.keys(layers).forEach(k=>{const l=layers[k];l.el.style.transform=`translate(-50%, -50%) translate(${l.x}px, ${l.y}px) rotate(${l.rot}deg) scale(${l.scale})`;l.el.style.zIndex=l.zIndex});refImg.classList.remove('apply-difference');drawingImg.classList.remove('apply-difference');if(diagnosticMode==='blink'){refImg.style.opacity=blinkState?1:0;drawingImg.style.opacity=blinkState?0:1}else{if(currentMode==='mark-ref'){refImg.style.opacity=1;drawingImg.style.opacity=.05}else if(currentMode==='mark-draw'){refImg.style.opacity=.2;drawingImg.style.opacity=1}else if(diagnosticMode==='outline'){refImg.style.opacity=1;drawingImg.style.opacity=1;(activeTarget==='draw'?drawingImg:refImg).classList.add('apply-difference')}else{refImg.style.opacity=layers.ref.opacity;drawingImg.style.opacity=layers.draw.opacity}}const refLoaded=hasRef(),drawLoaded=hasDraw();strategyCard.classList.toggle('disabled-card',false);sourceFilesCard.classList.toggle('disabled-card',false);pinsPanel.classList.toggle('disabled-card',false);btnRef.disabled=!refLoaded||appEngineMode!=='proportional';btnDraw.disabled=!drawLoaded||appEngineMode!=='proportional';btnAlign.disabled=!refLoaded||!drawLoaded||refPoints.length<2||drawPoints.length<2;mobileComputeAlign.disabled=btnAlign.disabled;btnRef.textContent=`Set Ref (${refPoints.length}/2)`;btnDraw.textContent=`Set Draw (${drawPoints.length}/2)`;mobileSetRef.textContent=`Ref Pins ${refPoints.length}/2`;mobileSetDraw.textContent=`Draw Pins ${drawPoints.length}/2`;clearRefLink.style.display=refPoints.length>0?'inline-block':'none';clearDrawLink.style.display=drawPoints.length>0?'inline-block':'none';mobilePointControls.style.display=appEngineMode==='sightsize'?'none':'flex';mobileSight.classList.toggle('active',appEngineMode==='sightsize');mobileTwoPoint.classList.toggle('active',appEngineMode==='proportional');engineSightBtn.classList.toggle('active',appEngineMode==='sightsize');enginePropBtn.classList.toggle('active',appEngineMode==='proportional');mobileHideMarkers.textContent=panWrapper.classList.contains('hide-markers')?'Show Pins':'Hide Pins';if(!refLoaded||!drawLoaded){statusDisplay.textContent='Step 1: Import Images';statusDisplay.style.color='var(--text-main)'}else if(appEngineMode==='sightsize'){statusDisplay.textContent=aspectWarningActive?'⚠️ Crop Error: Aspect Ratio Mismatch!':'Sight-Size: Ratio Overlay Ready';statusDisplay.style.color=aspectWarningActive?'var(--accent-danger)':'var(--accent-success)'}else{statusDisplay.style.color='var(--text-main)';if(refPoints.length<2)statusDisplay.textContent='Step 2: Place 2 Ref Pins';else if(drawPoints.length<2)statusDisplay.textContent='Step 3: Place 2 Match Pins';else statusDisplay.textContent=isAlignedComputed?'Alignment Ready. Micro adjust if needed.':'Pins Ready: Compute Alignment'}updateMobileSections();updateMobileStatus()}mobileLoadRef.addEventListener('click',()=>uploadRef.click());mobileChangeRef.addEventListener('click',()=>uploadRef.click());mobileChooseDraw.addEventListener('click',()=>uploadDraw.click());mobileCameraDraw.addEventListener('click',()=>uploadDrawCamera.click());mobileReplaceDraw.addEventListener('click',()=>uploadDraw.click());mobileSight.addEventListener('click',()=>switchEngineMode('sightsize'));mobileTwoPoint.addEventListener('click',()=>switchEngineMode('proportional'));mobileSetRef.addEventListener('click',()=>{if(appEngineMode==='proportional')setMode(currentMode==='mark-ref'?'pan':'mark-ref')});mobileSetDraw.addEventListener('click',()=>{if(appEngineMode==='proportional')setMode(currentMode==='mark-draw'?'pan':'mark-draw')});mobileOverlay.addEventListener('click',()=>setDiagnosticMode('overlay'));mobileBlink.addEventListener('click',()=>setDiagnosticMode('blink'));mobileOutline.addEventListener('click',()=>setDiagnosticMode('outline'));mobileTargetRef.addEventListener('click',()=>setManualTarget('ref'));mobileTargetDraw.addEventListener('click',()=>setManualTarget('draw'));root.querySelectorAll('[data-nudge]').forEach(btn=>btn.addEventListener('click',()=>executeStepAdjustment(btn.dataset.nudge,false)));root.querySelectorAll('[data-scale]').forEach(btn=>btn.addEventListener('click',()=>{const a=layers[activeTarget];a.scale+=btn.dataset.scale==='+'?.005:-.005;a.scale=Math.max(.005,a.scale);updateTransforms()}));root.querySelectorAll('[data-rotate]').forEach(btn=>btn.addEventListener('click',()=>{layers[activeTarget].rot+=btn.dataset.rotate==='+'?.25:-.25;updateTransforms()}));mobileHideMarkers.addEventListener('click',()=>{const hide=!panWrapper.classList.contains('hide-markers');panWrapper.classList.toggle('hide-markers',hide);chkMarkers.checked=!hide;updateTransforms()});window.addEventListener('resize',()=>{if(appEngineMode==='sightsize')requestAnimationFrame(()=>requestAnimationFrame(triggerAutomatedSightSize));updateTransforms()});updateTransforms()});
+document.addEventListener("DOMContentLoaded",()=>{
+const $=s=>document.querySelector(s);
+const viewport=$("#viewport"), world=$("#world");
+const refImg=$("#ref-image"), drawImg=$("#draw-image");
+
+const state={
+  phase:"workspace",
+  alignment:"sight",
+  compare:"overlay",
+  target:"draw",
+  workspace:{zoom:1,x:0,y:0},
+  layers:{
+    ref:{x:0,y:0,scale:1,rot:0,opacity:1,z:1,el:refImg},
+    draw:{x:0,y:0,scale:1,rot:0,opacity:.5,z:2,el:drawImg}
+  },
+  points:{ref:[],draw:[]},
+  aligned:false,
+  aspectMismatch:false,
+  blinkOn:true,
+  blinkTimer:null,
+  markersHidden:false
+};
+
+const hasRef=()=>refImg.classList.contains("loaded");
+const hasDraw=()=>drawImg.classList.contains("loaded");
+
+function revoke(img){
+  if(img.src&&img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
+}
+function resetWorkspace(){state.workspace={zoom:1,x:0,y:0}}
+function resetLayer(which){
+  const l=state.layers[which];
+  l.x=0;l.y=0;l.scale=1;l.rot=0;l.opacity=which==="ref"?1:.5;
+}
+function removeMarkers(kind="all"){
+  if(kind==="all"||kind==="ref"){state.points.ref=[];document.querySelectorAll(".marker.ref").forEach(n=>n.remove())}
+  if(kind==="all"||kind==="draw"){state.points.draw=[];document.querySelectorAll(".marker.draw").forEach(n=>n.remove())}
+}
+function loadFile(kind,file){
+  if(!file)return;
+  if(kind==="ref"){
+    revoke(refImg);revoke(drawImg);
+    refImg.classList.remove("loaded");drawImg.classList.remove("loaded");
+    drawImg.removeAttribute("src");
+    removeMarkers("all");resetWorkspace();resetLayer("ref");resetLayer("draw");
+    state.aligned=false;state.phase="workspace";state.aspectMismatch=false;
+  }else{
+    revoke(drawImg);drawImg.classList.remove("loaded");
+    removeMarkers("draw");resetLayer("draw");
+    state.aligned=false;state.phase="workspace";state.aspectMismatch=false;
+  }
+
+  const img=kind==="ref"?refImg:drawImg;
+  const url=URL.createObjectURL(file);
+  img.onload=()=>{
+    img.classList.add("loaded");
+    if(state.alignment==="sight"&&hasRef()&&hasDraw()) autoSight();
+    render();
+  };
+  img.onerror=()=>{
+    URL.revokeObjectURL(url);
+    alert("That image could not be loaded. Please choose another image.");
+  };
+  img.src=url;
+}
+function autoSight(){
+  if(!hasRef()||!hasDraw())return;
+  const rr=refImg.naturalWidth/refImg.naturalHeight;
+  const dr=drawImg.naturalWidth/drawImg.naturalHeight;
+  state.aspectMismatch=Math.abs(rr-dr)>.01;
+  resetLayer("ref");resetLayer("draw");
+
+  requestAnimationFrame(()=>{
+    const rw=refImg.getBoundingClientRect().width,rh=refImg.getBoundingClientRect().height;
+    const dw=drawImg.getBoundingClientRect().width,dh=drawImg.getBoundingClientRect().height;
+    if(!rw||!rh||!dw||!dh){setTimeout(autoSight,30);return}
+    state.layers.draw.scale=rr>=dr?rh/dh:rw/dw;
+    state.phase="workspace";
+    render();
+  });
+}
+function setAlignment(type){
+  state.alignment=type;
+  state.aligned=false;
+  removeMarkers("all");
+  resetLayer("ref");resetLayer("draw");
+  state.phase="workspace";
+  if(type==="sight"&&hasRef()&&hasDraw()) autoSight();
+  render();
+}
+function setCompare(mode){
+  state.compare=mode;
+  if(state.blinkTimer){clearInterval(state.blinkTimer);state.blinkTimer=null}
+  if(mode==="blink"){
+    state.blinkOn=true;
+    state.blinkTimer=setInterval(()=>{state.blinkOn=!state.blinkOn;renderVisuals()},330);
+  }
+  render();
+}
+function setTarget(target){
+  state.target=target;
+  state.layers.ref.z=target==="ref"?2:1;
+  state.layers.draw.z=target==="draw"?2:1;
+  render();
+}
+function setPhase(phase){state.phase=phase;render()}
+function worldPoint(clientX,clientY){
+  const r=viewport.getBoundingClientRect();
+  return{
+    x:(clientX-(r.left+r.width/2)-state.workspace.x)/state.workspace.zoom,
+    y:(clientY-(r.top+r.height/2)-state.workspace.y)/state.workspace.zoom
+  };
+}
+function addMarker(pt,kind,index){
+  const m=document.createElement("div");
+  m.className=`marker ${kind}`;
+  m.style.left=`calc(50% + ${pt.x}px)`;
+  m.style.top=`calc(50% + ${pt.y}px)`;
+  m.textContent=index;
+  world.appendChild(m);
+}
+function placePoint(clientX,clientY){
+  if(state.alignment!=="two")return;
+  const pt=worldPoint(clientX,clientY);
+  if(state.phase==="point-ref"&&state.points.ref.length<2){
+    state.points.ref.push(pt);addMarker(pt,"ref",state.points.ref.length);
+    if(state.points.ref.length===2)state.phase="point-draw";
+  }else if(state.phase==="point-draw"&&state.points.draw.length<2){
+    state.points.draw.push(pt);addMarker(pt,"draw",state.points.draw.length);
+    if(state.points.draw.length===2)state.phase="workspace";
+  }
+  render();
+}
+function computeTwoPoint(){
+  if(state.points.ref.length<2||state.points.draw.length<2)return;
+  const [R1,R2]=state.points.ref,[D1,D2]=state.points.draw;
+  const distR=Math.hypot(R2.x-R1.x,R2.y-R1.y),distD=Math.hypot(D2.x-D1.x,D2.y-D1.y);
+  if(!distD)return;
+  const angleR=Math.atan2(R2.y-R1.y,R2.x-R1.x);
+  const angleD=Math.atan2(D2.y-D1.y,D2.x-D1.x);
+  const rad=angleR-angleD,cos=Math.cos(rad),sin=Math.sin(rad),scale=distR/distD;
+  resetLayer("ref");
+  const d=state.layers.draw;
+  d.scale=scale;d.rot=rad*180/Math.PI;
+  d.x=R1.x-((D1.x*cos-D1.y*sin)*scale);
+  d.y=R1.y-((D1.x*sin+D1.y*cos)*scale);
+  state.aligned=true;state.phase="adjust";state.markersHidden=true;
+  render();
+}
+function nudge(dir){
+  const l=state.layers[state.target],step=.5;
+  if(dir==="up")l.y-=step;
+  if(dir==="down")l.y+=step;
+  if(dir==="left")l.x-=step;
+  if(dir==="right")l.x+=step;
+  render();
+}
+function scaleLayer(delta){
+  const l=state.layers[state.target];
+  l.scale=Math.max(.005,l.scale+delta);
+  render();
+}
+function rotateLayer(delta){
+  state.layers[state.target].rot+=delta;
+  render();
+}
+
+function renderVisuals(){
+  const ws=state.workspace;
+  world.style.transform=`translate(${ws.x}px,${ws.y}px) scale(${ws.zoom})`;
+
+  for(const k of ["ref","draw"]){
+    const l=state.layers[k];
+    l.el.style.transform=`translate(-50%,-50%) translate(${l.x}px,${l.y}px) rotate(${l.rot}deg) scale(${l.scale})`;
+    l.el.style.zIndex=l.z;
+    l.el.classList.remove("difference");
+  }
+
+  viewport.classList.toggle("audit-outline",state.compare==="outline");
+  viewport.classList.toggle("mark-ref",state.phase==="point-ref");
+  viewport.classList.toggle("mark-draw",state.phase==="point-draw");
+  world.classList.toggle("hide-markers",state.markersHidden);
+  world.classList.toggle("hide-draw",state.phase==="point-ref");
+  world.classList.toggle("hide-ref",state.phase==="point-draw");
+
+  if(state.compare==="blink"){
+    refImg.style.opacity=state.blinkOn?1:0;
+    drawImg.style.opacity=state.blinkOn?0:1;
+  }else if(state.phase==="point-ref"){
+    refImg.style.opacity=1;drawImg.style.opacity=.05;
+  }else if(state.phase==="point-draw"){
+    refImg.style.opacity=.2;drawImg.style.opacity=1;
+  }else if(state.compare==="outline"){
+    refImg.style.opacity=1;drawImg.style.opacity=1;
+    state.layers[state.target].el.classList.add("difference");
+  }else{
+    refImg.style.opacity=state.layers.ref.opacity;
+    drawImg.style.opacity=state.layers.draw.opacity;
+  }
+}
+function statusText(){
+  if(!hasRef())return"Load a reference to begin.";
+  if(!hasDraw())return"Reference loaded. Add the current drawing.";
+  if(state.phase==="point-ref")return`Tap ${2-state.points.ref.length} reference point${2-state.points.ref.length===1?"":"s"}. Pinch and drag still move the locked workspace.`;
+  if(state.phase==="point-draw")return`Tap ${2-state.points.draw.length} matching drawing point${2-state.points.draw.length===1?"":"s"}.`;
+  if(state.alignment==="two"&&!state.aligned&&state.points.ref.length===2&&state.points.draw.length===2)return"Pins ready. Compute alignment.";
+  if(state.phase==="adjust")return`Adjust ${state.target==="draw"?"drawing":"reference"}: drag, pinch, and twist the selected layer.`;
+  if(state.alignment==="sight"&&state.aspectMismatch)return"Aspect ratios differ. Try 2-Point or micro-adjust.";
+  return"Workspace locked. Drag to pan and pinch to zoom.";
+}
+function renderDesktopSlots(){
+  const rs=$("#desktop-ref-slot"),ds=$("#desktop-draw-slot");
+  if(hasRef())rs.innerHTML=`<span class="small-label" style="color:var(--green);font-weight:700">✓ Reference Ready</span><button id="desktop-change-ref" class="btn-danger">Change</button>`;
+  else rs.innerHTML=`<input id="desktop-ref-input" type="file" accept="image/*">`;
+
+  if(hasDraw())ds.innerHTML=`<span class="small-label" style="color:var(--green);font-weight:700">✓ Drawing Ready</span><button id="desktop-change-draw" class="btn-danger">Replace</button>`;
+  else ds.innerHTML=`<input id="desktop-draw-input" type="file" accept="image/*">`;
+
+  const ri=$("#desktop-ref-input");
+  if(ri)ri.onchange=e=>{loadFile("ref",e.target.files[0]);e.target.value=""};
+  const di=$("#desktop-draw-input");
+  if(di)di.onchange=e=>{loadFile("draw",e.target.files[0]);e.target.value=""};
+  const cr=$("#desktop-change-ref");
+  if(cr)cr.onclick=()=>$("#mobile-ref-input").click();
+  const cd=$("#desktop-change-draw");
+  if(cd)cd.onclick=()=>$("#mobile-draw-library").click();
+}
+function renderStart(){
+  const start=$("#mobile-start"),title=$("#start-title"),copy=$("#start-copy"),action=$("#start-action");
+  if(!hasRef()){
+    start.classList.add("show");
+    title.textContent="Load Reference";
+    copy.textContent="Choose the image that anchors this drawing session.";
+    action.textContent="Choose Reference";
+    action.onclick=()=>$("#mobile-ref-input").click();
+  }else if(!hasDraw()){
+    start.classList.add("show");
+    title.textContent="Add Current Drawing";
+    copy.textContent="Choose an existing drawing photo. Camera access is available from Images.";
+    action.textContent="Choose Drawing";
+    action.onclick=()=>$("#mobile-draw-library").click();
+  }else{
+    start.classList.remove("show");
+  }
+}
+function render(){
+  renderVisuals();
+  $("#desktop-status").textContent=statusText();
+  $("#mobile-status").textContent=statusText();
+
+  $("#desktop-sight").classList.toggle("active",state.alignment==="sight");
+  $("#desktop-two").classList.toggle("active",state.alignment==="two");
+  $("#m-sight").classList.toggle("active",state.alignment==="sight");
+  $("#m-two").classList.toggle("active",state.alignment==="two");
+  $("#desktop-pins-card").style.display=state.alignment==="two"?"flex":"none";
+
+  $("#desktop-ref-pins").classList.toggle("active",state.phase==="point-ref");
+  $("#desktop-draw-pins").classList.toggle("active",state.phase==="point-draw");
+  $("#desktop-ref-pins").textContent=`Set Ref (${state.points.ref.length}/2)`;
+  $("#desktop-draw-pins").textContent=`Set Draw (${state.points.draw.length}/2)`;
+  $("#desktop-compute").disabled=!(state.points.ref.length===2&&state.points.draw.length===2);
+
+  for(const mode of ["overlay","blink","outline"]){
+    $("#desktop-"+mode).classList.toggle("active",state.compare===mode);
+    $("#m-"+mode).classList.toggle("active",state.compare===mode);
+  }
+
+  $("#desktop-target-ref").classList.toggle("active",state.target==="ref");
+  $("#desktop-target-draw").classList.toggle("active",state.target==="draw");
+  $("#m-nav").classList.toggle("active",state.phase!=="adjust");
+  $("#m-adjust").classList.toggle("active",state.phase==="adjust");
+  $("#desktop-opacity").value=state.layers[state.target].opacity;
+  $("#desktop-opacity-label").textContent=`${state.target==="ref"?"Reference":"Drawing"} Opacity`;
+
+  renderStart();
+  renderDesktopSlots();
+}
+
+/* DESKTOP BINDINGS */
+$("#desktop-sight").onclick=()=>setAlignment("sight");
+$("#desktop-two").onclick=()=>setAlignment("two");
+$("#desktop-ref-pins").onclick=()=>setPhase(state.phase==="point-ref"?"workspace":"point-ref");
+$("#desktop-draw-pins").onclick=()=>setPhase(state.phase==="point-draw"?"workspace":"point-draw");
+$("#desktop-clear-ref").onclick=()=>{removeMarkers("ref");render()};
+$("#desktop-clear-draw").onclick=()=>{removeMarkers("draw");render()};
+$("#desktop-compute").onclick=computeTwoPoint;
+$("#desktop-overlay").onclick=()=>setCompare("overlay");
+$("#desktop-blink").onclick=()=>setCompare("blink");
+$("#desktop-outline").onclick=()=>setCompare("outline");
+$("#desktop-target-ref").onclick=()=>setTarget("ref");
+$("#desktop-target-draw").onclick=()=>setTarget("draw");
+$("#desktop-opacity").oninput=e=>{state.layers[state.target].opacity=+e.target.value;renderVisuals()};
+$("#desktop-reset").onclick=()=>{
+  resetWorkspace();resetLayer("ref");resetLayer("draw");
+  state.phase="workspace";state.aligned=false;
+  if(state.alignment==="sight")autoSight();
+  render();
+};
+
+/* MOBILE FILE INPUTS */
+$("#mobile-ref-input").onchange=e=>{loadFile("ref",e.target.files[0]);e.target.value=""};
+$("#mobile-draw-library").onchange=e=>{loadFile("draw",e.target.files[0]);e.target.value=""};
+$("#mobile-draw-camera").onchange=e=>{loadFile("draw",e.target.files[0]);e.target.value=""};
+
+function openPopover(html){
+  $("#popover-content").innerHTML=html;
+  $("#mobile-popover").classList.add("open");
+}
+function closePopover(){$("#mobile-popover").classList.remove("open")}
+
+$("#m-more").onclick=()=>{
+  openPopover(`
+    <div class="pop-title">Session & View</div>
+    <div class="pop-grid two">
+      <button id="p-hide">${state.markersHidden?"Show":"Hide"} Pins</button>
+      <button id="p-reset">Reset View</button>
+      <button id="p-new">Change Reference</button>
+      <button id="p-close">Close</button>
+    </div>`);
+  $("#p-hide").onclick=()=>{state.markersHidden=!state.markersHidden;closePopover();render()};
+  $("#p-reset").onclick=()=>{resetWorkspace();if(state.alignment==="sight")autoSight();closePopover();render()};
+  $("#p-new").onclick=()=>{closePopover();$("#mobile-ref-input").click()};
+  $("#p-close").onclick=closePopover;
+};
+
+$("#m-images").onclick=()=>{
+  openPopover(`
+    <div class="pop-title">Images</div>
+    <div class="pop-grid">
+      <button id="p-ref">Change Reference</button>
+      <button id="p-library">Choose Drawing</button>
+      <button id="p-camera">Take Drawing Photo</button>
+    </div>`);
+  $("#p-ref").onclick=()=>{closePopover();$("#mobile-ref-input").click()};
+  $("#p-library").onclick=()=>{closePopover();$("#mobile-draw-library").click()};
+  $("#p-camera").onclick=()=>{closePopover();$("#mobile-draw-camera").click()};
+};
+
+$("#m-sight").onclick=()=>setAlignment("sight");
+$("#m-two").onclick=()=>{
+  setAlignment("two");
+  openPopover(`
+    <div class="pop-title">2-Point Alignment</div>
+    <div class="pop-grid two">
+      <button id="p-refpins">Place Ref Pins</button>
+      <button id="p-drawpins">Place Draw Pins</button>
+      <button id="p-compute" disabled>Compute</button>
+      <button id="p-clear">Clear Pins</button>
+    </div>`);
+  $("#p-refpins").onclick=()=>{closePopover();setPhase("point-ref")};
+  $("#p-drawpins").onclick=()=>{closePopover();setPhase("point-draw")};
+  $("#p-clear").onclick=()=>{removeMarkers("all");closePopover();render()};
+};
+
+$("#m-overlay").onclick=()=>setCompare("overlay");
+$("#m-blink").onclick=()=>setCompare("blink");
+$("#m-outline").onclick=()=>setCompare("outline");
+$("#m-nav").onclick=()=>setPhase("workspace");
+
+$("#m-adjust").onclick=()=>{
+  if(!hasRef()||!hasDraw())return;
+  state.phase="adjust";
+  openPopover(`
+    <div class="pop-title">Adjust Layer</div>
+    <div class="pop-grid two">
+      <button id="p-target-ref" class="${state.target==="ref"?"active":""}">Reference</button>
+      <button id="p-target-draw" class="${state.target==="draw"?"active":""}">Drawing</button>
+    </div>
+    <div class="mobile-opacity">
+      <span>${state.target==="ref"?"Reference":"Drawing"} Opacity</span>
+      <input id="p-opacity" type="range" min="0" max="1" step="0.01" value="${state.layers[state.target].opacity}">
+    </div>
+    <div class="pop-grid" style="margin-top:8px">
+      <button id="p-scale-minus">Scale −</button>
+      <button id="p-scale-plus">Scale +</button>
+      <button id="p-close-adjust">Done</button>
+    </div>`);
+  $("#p-target-ref").onclick=()=>{setTarget("ref");closePopover();$("#m-adjust").click()};
+  $("#p-target-draw").onclick=()=>{setTarget("draw");closePopover();$("#m-adjust").click()};
+  $("#p-opacity").oninput=e=>{state.layers[state.target].opacity=+e.target.value;renderVisuals()};
+  $("#p-scale-minus").onclick=()=>scaleLayer(-.005);
+  $("#p-scale-plus").onclick=()=>scaleLayer(.005);
+  $("#p-close-adjust").onclick=closePopover;
+};
+
+/* POINTER / TOUCH STATE ENGINE */
+let mousePan=null;
+
+viewport.addEventListener("mousedown",e=>{
+  if(e.button!==0)return;
+  if(state.phase==="point-ref"||state.phase==="point-draw"){
+    placePoint(e.clientX,e.clientY);
+    return;
+  }
+  mousePan={x:e.clientX,y:e.clientY};
+});
+
+window.addEventListener("mousemove",e=>{
+  if(!mousePan)return;
+  const dx=e.clientX-mousePan.x,dy=e.clientY-mousePan.y;
+  mousePan={x:e.clientX,y:e.clientY};
+
+  if(state.phase==="adjust"){
+    const l=state.layers[state.target];
+    l.x+=dx/state.workspace.zoom;
+    l.y+=dy/state.workspace.zoom;
+  }else{
+    state.workspace.x+=dx;
+    state.workspace.y+=dy;
+  }
+  renderVisuals();
+});
+
+window.addEventListener("mouseup",()=>mousePan=null);
+
+viewport.addEventListener("wheel",e=>{
+  e.preventDefault();
+  const r=viewport.getBoundingClientRect();
+  const cx=e.clientX-r.left-r.width/2,cy=e.clientY-r.top-r.height/2;
+  const factor=e.deltaY<0?1.06:.94;
+  const next=Math.max(.1,Math.min(8,state.workspace.zoom*factor));
+  const wx=(cx-state.workspace.x)/state.workspace.zoom;
+  const wy=(cy-state.workspace.y)/state.workspace.zoom;
+  state.workspace.x=cx-wx*next;
+  state.workspace.y=cy-wy*next;
+  state.workspace.zoom=next;
+  renderVisuals();
+},{passive:false});
+
+let gesture=null;
+const dist=(a,b)=>Math.hypot(b.clientX-a.clientX,b.clientY-a.clientY);
+const angle=(a,b)=>Math.atan2(b.clientY-a.clientY,b.clientX-a.clientX);
+const center=(a,b)=>({x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2});
+
+viewport.addEventListener("touchstart",e=>{
+  e.preventDefault();
+
+  if((state.phase==="point-ref"||state.phase==="point-draw")&&e.touches.length===1){
+    gesture={kind:"tap",x:e.touches[0].clientX,y:e.touches[0].clientY,moved:false};
+    return;
+  }
+
+  if(e.touches.length===1){
+    const t=e.touches[0];
+    gesture={kind:"drag",x:t.clientX,y:t.clientY};
+  }else if(e.touches.length===2){
+    const a=e.touches[0],b=e.touches[1],c=center(a,b);
+    gesture={
+      kind:"pinch",
+      startDist:dist(a,b),
+      startAngle:angle(a,b),
+      startCenter:c,
+      startZoom:state.workspace.zoom,
+      startWX:state.workspace.x,
+      startWY:state.workspace.y,
+      startLayer:{...state.layers[state.target]}
+    };
+  }
+},{passive:false});
+
+viewport.addEventListener("touchmove",e=>{
+  e.preventDefault();
+  if(!gesture)return;
+
+  if(gesture.kind==="tap"){
+    gesture.moved=true;
+    return;
+  }
+
+  if(gesture.kind==="drag"&&e.touches.length===1){
+    const t=e.touches[0];
+    const dx=t.clientX-gesture.x,dy=t.clientY-gesture.y;
+    gesture.x=t.clientX;gesture.y=t.clientY;
+
+    if(state.phase==="adjust"){
+      const l=state.layers[state.target];
+      l.x+=dx/state.workspace.zoom;
+      l.y+=dy/state.workspace.zoom;
+    }else{
+      state.workspace.x+=dx;
+      state.workspace.y+=dy;
+    }
+    renderVisuals();
+  }else if(gesture.kind==="pinch"&&e.touches.length===2){
+    const a=e.touches[0],b=e.touches[1],c=center(a,b);
+
+    if(state.phase==="adjust"){
+      const l=state.layers[state.target];
+      const ratio=dist(a,b)/Math.max(1,gesture.startDist);
+      l.scale=Math.max(.005,gesture.startLayer.scale*ratio);
+      l.rot=gesture.startLayer.rot+(angle(a,b)-gesture.startAngle)*180/Math.PI;
+      l.x=gesture.startLayer.x+(c.x-gesture.startCenter.x)/state.workspace.zoom;
+      l.y=gesture.startLayer.y+(c.y-gesture.startCenter.y)/state.workspace.zoom;
+    }else{
+      const next=Math.max(.1,Math.min(8,gesture.startZoom*(dist(a,b)/Math.max(1,gesture.startDist))));
+      const r=viewport.getBoundingClientRect();
+      const vcx=r.left+r.width/2,vcy=r.top+r.height/2;
+      const wx=(gesture.startCenter.x-vcx-gesture.startWX)/gesture.startZoom;
+      const wy=(gesture.startCenter.y-vcy-gesture.startWY)/gesture.startZoom;
+      state.workspace.zoom=next;
+      state.workspace.x=c.x-vcx-wx*next;
+      state.workspace.y=c.y-vcy-wy*next;
+    }
+    renderVisuals();
+  }
+},{passive:false});
+
+viewport.addEventListener("touchend",()=>{
+  if(gesture&&gesture.kind==="tap"&&!gesture.moved)placePoint(gesture.x,gesture.y);
+  gesture=null;
+},{passive:false});
+
+/* KEYBOARD MICRO ADJUST */
+window.addEventListener("keydown",e=>{
+  if(!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key))return;
+  e.preventDefault();
+
+  const map={ArrowUp:"up",ArrowDown:"down",ArrowLeft:"left",ArrowRight:"right"};
+
+  if(e.shiftKey){
+    if(e.key==="ArrowUp")scaleLayer(.005);
+    if(e.key==="ArrowDown")scaleLayer(-.005);
+    if(e.key==="ArrowLeft")rotateLayer(-.25);
+    if(e.key==="ArrowRight")rotateLayer(.25);
+  }else{
+    nudge(map[e.key]);
+  }
+});
+
+render();
+});
 </script>
 </body>
 </html>
