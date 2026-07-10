@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Drawing Checker Studio v1.2.3 — Sprint 1A Workflow State UI</title>
+<title>Drawing Checker Studio v1.2.4 — Sprint 1A Drawing Load Fix</title>
 <style>
 :root{
   --bg:#121214;--panel:#1a1a1e;--card:#222227;--border:#34343d;
@@ -232,7 +232,8 @@ const state={
   blinkOn:true,
   blinkTimer:null,
   markersHidden:false,
-  mobileStrategyChosen:false
+  mobileStrategyChosen:false,
+  loadingKind:null
 };
 
 const hasRef=()=>refImg.classList.contains("loaded");
@@ -266,23 +267,41 @@ function beginNewMobileSession(){
 }
 function loadFile(kind,file){
   if(!file)return;
+
   closePopover();
+  state.loadingKind=kind;
+  render();
+
   if(kind==="ref"){
     revoke(refImg);revoke(drawImg);
     refImg.classList.remove("loaded");drawImg.classList.remove("loaded");
-    drawImg.removeAttribute("src");
-    removeMarkers("all");resetWorkspace();resetLayer("ref");resetLayer("draw");
-    state.aligned=false;state.phase="workspace";state.aspectMismatch=false;
+    refImg.removeAttribute("src");drawImg.removeAttribute("src");
+    removeMarkers("all");
+    resetWorkspace();resetLayer("ref");resetLayer("draw");
+    state.aligned=false;
+    state.phase="workspace";
+    state.aspectMismatch=false;
   }else{
-    revoke(drawImg);drawImg.classList.remove("loaded");
-    removeMarkers("draw");resetLayer("draw");
-    state.aligned=false;state.phase="workspace";state.aspectMismatch=false;
+    revoke(drawImg);
+    drawImg.classList.remove("loaded");
+    drawImg.removeAttribute("src");
+    removeMarkers("draw");
+    resetLayer("draw");
+    state.aligned=false;
+    state.phase="workspace";
+    state.aspectMismatch=false;
   }
 
   const img=kind==="ref"?refImg:drawImg;
   const url=URL.createObjectURL(file);
-  img.onload=()=>{
+
+  img.onload=async()=>{
+    try{
+      if(img.decode) await img.decode();
+    }catch(_){}
+
     img.classList.add("loaded");
+    state.loadingKind=null;
 
     if(state.alignment==="sight"&&hasRef()&&hasDraw()){
       autoSight();
@@ -290,13 +309,20 @@ function loadFile(kind,file){
       render();
     }
   };
+
   img.onerror=()=>{
     URL.revokeObjectURL(url);
+    state.loadingKind=null;
+    img.classList.remove("loaded");
+    img.removeAttribute("src");
+    render();
     alert("That image could not be loaded. Please choose another image.");
   };
+
   img.src=url;
 }
 function autoSight(){
+  if(state.loadingKind)return;
   if(!hasRef()||!hasDraw())return;
 
   const rr=refImg.naturalWidth/refImg.naturalHeight;
@@ -445,6 +471,8 @@ function renderVisuals(){
   }
 }
 function statusText(){
+  if(state.loadingKind==="ref")return"Loading reference…";
+  if(state.loadingKind==="draw")return"Loading drawing…";
   if(!hasRef())return"Load a reference to begin.";
   if(!hasDraw())return"Reference loaded. Add the current drawing.";
   if(state.phase==="point-ref")return`Tap ${2-state.points.ref.length} reference point${2-state.points.ref.length===1?"":"s"}. Pinch and drag still move the locked workspace.`;
@@ -481,7 +509,9 @@ function renderStart(){
 
   let setupVisible=true;
 
-  if(!state.mobileStrategyChosen){
+  if(state.loadingKind){
+    setupVisible=false;
+  }else if(!state.mobileStrategyChosen){
     title.textContent="Choose Alignment";
     copy.textContent="Select the alignment tool you want to use first.";
     strategyActions.style.display="grid";
@@ -495,7 +525,7 @@ function renderStart(){
     action.onclick=()=>$("#mobile-ref-input").click();
   }else if(!hasDraw()){
     title.textContent="Add Current Drawing";
-    copy.textContent="Choose the current drawing photo. You can replace it repeatedly during the session.";
+    copy.textContent="Choose the current drawing photo.";
     strategyActions.style.display="none";
     action.style.display="block";
     action.textContent="Choose Drawing";
@@ -515,7 +545,6 @@ function renderStart(){
     closePopover();
   }
 }
-
 function renderMobileWorkflow(){
   const next=$("#mobile-next-action");
   if(!next)return;
