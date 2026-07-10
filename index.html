@@ -171,9 +171,13 @@ input[type=range]{width:100%;accent-color:var(--blue)}
 
   <div id="mobile-start" class="mobile-ui mobile-start show">
     <div class="mobile-start-card">
-      <h2 id="start-title">Load Reference</h2>
-      <p id="start-copy">Choose the image that anchors this drawing session.</p>
-      <button id="start-action">Choose Reference</button>
+      <h2 id="start-title">Choose Alignment</h2>
+      <p id="start-copy">Select the alignment tool you want to begin with.</p>
+      <div id="start-strategy-actions" class="row2">
+        <button id="start-sight">Sight-Size</button>
+        <button id="start-two">2-Point</button>
+      </div>
+      <button id="start-action" style="display:none">Continue</button>
     </div>
   </div>
 
@@ -221,11 +225,13 @@ const state={
   aspectMismatch:false,
   blinkOn:true,
   blinkTimer:null,
-  markersHidden:false
+  markersHidden:false,
+  mobileStrategyChosen:false
 };
 
 const hasRef=()=>refImg.classList.contains("loaded");
 const hasDraw=()=>drawImg.classList.contains("loaded");
+const isMobileLayout=()=>window.matchMedia("(max-width:768px)").matches;
 
 function revoke(img){
   if(img.src&&img.src.startsWith("blob:")) URL.revokeObjectURL(img.src);
@@ -238,6 +244,19 @@ function resetLayer(which){
 function removeMarkers(kind="all"){
   if(kind==="all"||kind==="ref"){state.points.ref=[];document.querySelectorAll(".marker.ref").forEach(n=>n.remove())}
   if(kind==="all"||kind==="draw"){state.points.draw=[];document.querySelectorAll(".marker.draw").forEach(n=>n.remove())}
+}
+function beginNewMobileSession(){
+  revoke(refImg);revoke(drawImg);
+  refImg.removeAttribute("src");drawImg.removeAttribute("src");
+  refImg.classList.remove("loaded");drawImg.classList.remove("loaded");
+  removeMarkers("all");
+  resetWorkspace();resetLayer("ref");resetLayer("draw");
+  state.phase="workspace";
+  state.aligned=false;
+  state.aspectMismatch=false;
+  state.mobileStrategyChosen=false;
+  closePopover();
+  render();
 }
 function loadFile(kind,file){
   if(!file)return;
@@ -284,6 +303,7 @@ function autoSight(){
 }
 function setAlignment(type){
   state.alignment=type;
+  if(isMobileLayout()) state.mobileStrategyChosen=true;
   state.aligned=false;
   removeMarkers("all");
   resetLayer("ref");resetLayer("draw");
@@ -429,17 +449,34 @@ function renderDesktopSlots(){
   if(cd)cd.onclick=()=>$("#mobile-draw-library").click();
 }
 function renderStart(){
-  const start=$("#mobile-start"),title=$("#start-title"),copy=$("#start-copy"),action=$("#start-action");
+  const start=$("#mobile-start");
+  const title=$("#start-title");
+  const copy=$("#start-copy");
+  const action=$("#start-action");
+  const strategyActions=$("#start-strategy-actions");
+
+  if(!state.mobileStrategyChosen){
+    start.classList.add("show");
+    title.textContent="Choose Alignment";
+    copy.textContent="Select the alignment tool you want to use first.";
+    strategyActions.style.display="grid";
+    action.style.display="none";
+    return;
+  }
+
+  strategyActions.style.display="none";
+  action.style.display="block";
+
   if(!hasRef()){
     start.classList.add("show");
-    title.textContent="Load Reference";
-    copy.textContent="Choose the image that anchors this drawing session.";
+    title.textContent=state.alignment==="sight" ? "Sight-Size Selected" : "2-Point Selected";
+    copy.textContent="Now choose the reference image that anchors this comparison.";
     action.textContent="Choose Reference";
     action.onclick=()=>$("#mobile-ref-input").click();
   }else if(!hasDraw()){
     start.classList.add("show");
     title.textContent="Add Current Drawing";
-    copy.textContent="Choose an existing drawing photo. Camera access is available from Images.";
+    copy.textContent="Choose the current drawing photo. You can replace it repeatedly during the session.";
     action.textContent="Choose Drawing";
     action.onclick=()=>$("#mobile-draw-library").click();
   }else{
@@ -522,7 +559,7 @@ $("#m-more").onclick=()=>{
     </div>`);
   $("#p-hide").onclick=()=>{state.markersHidden=!state.markersHidden;closePopover();render()};
   $("#p-reset").onclick=()=>{resetWorkspace();if(state.alignment==="sight")autoSight();closePopover();render()};
-  $("#p-new").onclick=()=>{closePopover();$("#mobile-ref-input").click()};
+  $("#p-new").onclick=beginNewMobileSession;
   $("#p-close").onclick=closePopover;
 };
 
@@ -534,14 +571,18 @@ $("#m-images").onclick=()=>{
       <button id="p-library">Choose Drawing</button>
       <button id="p-camera">Take Drawing Photo</button>
     </div>`);
-  $("#p-ref").onclick=()=>{closePopover();$("#mobile-ref-input").click()};
+  $("#p-ref").onclick=beginNewMobileSession;
   $("#p-library").onclick=()=>{closePopover();$("#mobile-draw-library").click()};
   $("#p-camera").onclick=()=>{closePopover();$("#mobile-draw-camera").click()};
 };
 
+$("#start-sight").onclick=()=>setAlignment("sight");
+$("#start-two").onclick=()=>setAlignment("two");
+
 $("#m-sight").onclick=()=>setAlignment("sight");
 $("#m-two").onclick=()=>{
   setAlignment("two");
+  if(!hasRef()||!hasDraw()) return;
   openPopover(`
     <div class="pop-title">2-Point Alignment</div>
     <div class="pop-grid two">
@@ -730,6 +771,7 @@ window.addEventListener("keydown",e=>{
   }
 });
 
+if(!isMobileLayout()) state.mobileStrategyChosen=true;
 render();
 });
 </script>
